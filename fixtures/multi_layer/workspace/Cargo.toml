@@ -1,0 +1,3 @@
+[workspace]
+members = ["single_layer"]
+resolver = "3"
