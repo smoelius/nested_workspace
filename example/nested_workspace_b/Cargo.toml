@@ -1,0 +1,3 @@
+[workspace]
+members = ["div", "mul"]
+resolver = "3"
