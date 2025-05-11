@@ -1,0 +1,7 @@
+args = ["test"]
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../fixtures/no_roots"

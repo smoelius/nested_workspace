@@ -1,0 +1,7 @@
+args = ["build", "-vv"]
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../example"

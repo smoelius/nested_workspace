@@ -1,0 +1,16 @@
+...
+   Compiling multiple_toolchains v0.1.0 ([CWD])
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/multiple_toolchains-[..])
+<<< [CWD]/beta
+...
+   Compiling beta v0.1.0 ([CWD]/beta)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/beta-[..])
+>>> [CWD]/beta
+<<< [CWD]/nightly
+...
+   Compiling nightly v0.1.0 ([CWD]/nightly)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/nightly-[..])
+>>> [CWD]/nightly

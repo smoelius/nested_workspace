@@ -1,0 +1,7 @@
+args = ["check", "-vv"]
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../fixtures/conflicting_features"

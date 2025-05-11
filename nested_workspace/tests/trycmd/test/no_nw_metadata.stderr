@@ -1,0 +1,13 @@
+...
+error: failed to run custom build command for `no_nw_metadata v0.1.0 ([CWD])`
+
+Caused by:
+  process didn't exit successfully: `[CWD]/target/debug/build/no_nw_metadata-[..]/build-script-build` (exit status: 101)
+  --- stdout
+[..]
+
+  --- stderr
+
+  thread 'main' panicked at [..]:
+  called `Result::unwrap()` on an `Err` value: package at `[CWD]/Cargo.toml` has no `nested_workspace` metadata
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

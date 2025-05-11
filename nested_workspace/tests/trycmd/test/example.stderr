@@ -1,0 +1,16 @@
+...
+   Compiling nested_workspace_example v0.1.0 ([CWD])
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (/home/smoelius/gh/smoelius/nested_workspace/target/debug/deps/nested_workspace_example-[..])
+<<< [CWD]/nested_workspace_a
+...
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/add-[..])
+     Running unittests src/lib.rs (target/debug/deps/sub-[..])
+>>> [CWD]/nested_workspace_a
+<<< [CWD]/nested_workspace_b
+...
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/div-[..])
+     Running unittests src/lib.rs (target/debug/deps/mul-[..])
+>>> [CWD]/nested_workspace_b

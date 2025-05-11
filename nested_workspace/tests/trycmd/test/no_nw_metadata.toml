@@ -1,0 +1,9 @@
+args = ["test"]
+
+status = "failed"
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../fixtures/no_nw_metadata"

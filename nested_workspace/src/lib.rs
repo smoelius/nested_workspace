@@ -1,0 +1,184 @@
+use anyhow::{Result, bail, ensure};
+use cargo_metadata::{MetadataCommand, Package};
+use log::debug;
+use serde::Deserialize;
+use std::{
+    env::var,
+    fmt::Debug,
+    fs::write,
+    io::Write,
+    path::{Path, PathBuf},
+    time::Instant,
+};
+
+mod command;
+use command::parent_command;
+pub use command::{
+    CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
+};
+
+mod util;
+use util::Delimiter;
+
+#[derive(Deserialize)]
+struct Metadata {
+    roots: Vec<String>,
+}
+
+#[derive(Clone, Copy)]
+pub enum Source {
+    BuildScript,
+    Test,
+    CargoNw,
+}
+
+impl std::fmt::Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Source::BuildScript => f.write_str("build script"),
+            Source::Test => f.write_str("test"),
+            Source::CargoNw => f.write_str("cargo nw"),
+        }
+    }
+}
+
+pub fn build() {
+    try_build().unwrap();
+}
+
+pub fn test() {
+    try_test().unwrap();
+}
+
+pub fn try_build() -> Result<()> {
+    // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's default
+    // behavior is to run the build script for the first command (`cargo check`), but not again for
+    // the second. However, we need to the build script to be rerun so that we can call `cargo
+    // build` for the nested workspaces. `force_rerun` is a hack to achieve this.
+    force_rerun()?;
+
+    run_parent_cargo_command_on_current_package_nested_workspace_roots(Source::BuildScript)
+}
+
+// smoelius: Variant of @juggle-tux's idea here:
+// https://users.rust-lang.org/t/how-can-i-make-build-rs-rerun-every-time-that-cargo-run-or-cargo-build-is-run/51852/5
+fn force_rerun() -> Result<()> {
+    let out_dir = var("OUT_DIR")?;
+    let path = PathBuf::from(out_dir).join("now.txt");
+    write(&path, format!("{:?}\n", Instant::now()))?;
+    println!("cargo::rerun-if-changed={}", path.display());
+    Ok(())
+}
+
+pub fn try_test() -> Result<()> {
+    run_parent_cargo_command_on_current_package_nested_workspace_roots(Source::Test)
+}
+
+fn run_parent_cargo_command_on_current_package_nested_workspace_roots(
+    source: Source,
+) -> Result<()> {
+    let command = parent_command()?;
+    let args = command.split_ascii_whitespace().collect::<Vec<_>>();
+    let (subcommand, args) = parse_cargo_command(&args)?;
+    let roots = current_package_nested_workspace_roots()?;
+    run_cargo_subcommand_on_nested_workspace_roots(source, &subcommand, args, &roots, false)?;
+    Ok(())
+}
+
+pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<str> + Debug>(
+    subcommand: &CargoSubcommand,
+    args: &[T],
+    dir: &Path,
+    is_recursive_call: bool,
+) -> Result<()> {
+    let roots = all_nested_workspace_roots(dir)?;
+    run_cargo_subcommand_on_nested_workspace_roots(
+        Source::CargoNw,
+        subcommand,
+        args,
+        &roots,
+        is_recursive_call,
+    )?;
+    Ok(())
+}
+
+fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<str> + Debug>(
+    source: Source,
+    subcommand: &CargoSubcommand,
+    args: &[T],
+    roots: &[PathBuf],
+    is_recursive_call: bool,
+) -> Result<()> {
+    env_logger::try_init().unwrap_or_default();
+    if roots.is_empty() {
+        if !is_recursive_call {
+            writeln!(std::io::stderr(), "Warning: found no nested workspaces")?;
+        }
+        return Ok(());
+    }
+    for root in roots {
+        let _delimiter = Delimiter::new(root);
+        let mut command = build_cargo_command(source, subcommand, args)?;
+        command.current_dir(root);
+        debug!("{source}: {:?}", &command);
+        let status = command.status()?;
+        ensure!(status.success(), "command failed: {command:?}");
+        // smoelius: `cargo nw` is a special case. It must be run manually on each nested
+        // workspace root to ensure that _nested_-nested workspaces are handled.
+        if matches!(source, Source::CargoNw) {
+            run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, root, true)?;
+        }
+    }
+    Ok(())
+}
+
+fn current_package_nested_workspace_roots() -> Result<Vec<PathBuf>> {
+    let cargo_manifest_path = var("CARGO_MANIFEST_PATH")?;
+    let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
+    let Some(package) = cargo_metadata
+        .packages
+        .iter()
+        .find(|package| package.manifest_path == cargo_manifest_path)
+    else {
+        bail!("failed to find package with manifest at `{cargo_manifest_path}`");
+    };
+    let Some(roots) = nested_workspace_roots_for_package(package)? else {
+        bail!("package at `{cargo_manifest_path}` has no `nested_workspace` metadata");
+    };
+    Ok(roots)
+}
+
+fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<PathBuf>> {
+    let mut roots = Vec::new();
+    let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
+    for package in &cargo_metadata.packages {
+        if let Some(current_roots) = nested_workspace_roots_for_package(package)? {
+            roots.extend(current_roots);
+        }
+    }
+    Ok(roots)
+}
+
+fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<PathBuf>>> {
+    let Some(nested_workspace_value) = package
+        .metadata
+        .as_object()
+        .and_then(|object| object.get("nested_workspace"))
+    else {
+        return Ok(None);
+    };
+    let Some(cargo_manifest_dir) = package.manifest_path.parent() else {
+        bail!(
+            "failed to get manifest dir from `{}`",
+            package.manifest_path
+        );
+    };
+    let nested_workspace_metadata =
+        serde_json::from_value::<Metadata>(nested_workspace_value.clone())?;
+    let roots = nested_workspace_metadata
+        .roots
+        .into_iter()
+        .map(|path| Path::new(&cargo_manifest_dir).join(path))
+        .collect();
+    Ok(Some(roots))
+}

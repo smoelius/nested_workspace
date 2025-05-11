@@ -1,0 +1,18 @@
+   Compiling to_bytes v0.1.0 ([CWD])
+error: Features `big-endian` and `little-endian` cannot be enabled simultaneously
+ --> src/lib.rs:2:1
+  |
+2 | compile_error!("Features `big-endian` and `little-endian` cannot be enabled simultaneously");
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0119]: conflicting implementations of trait `ToBytes` for type `i32`
+  --> src/lib.rs:16:1
+   |
+9  | impl ToBytes for i32 {
+   | -------------------- first implementation here
+...
+16 | impl ToBytes for i32 {
+   | ^^^^^^^^^^^^^^^^^^^^ conflicting implementation for `i32`
+
+For more information about this error, try `rustc --explain E0119`.
+error: could not compile `to_bytes` (lib) due to 2 previous errors

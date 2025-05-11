@@ -1,0 +1,9 @@
+args = ["check", "-vv"]
+
+status = "failed"
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../fixtures/empty_workspace"

@@ -1,0 +1,9 @@
+args = ["build", "--all-features"]
+
+status = "failed"
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../../fixtures/conflicting_features/to_bytes"
