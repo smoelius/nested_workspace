@@ -1,0 +1,13 @@
+[package]
+name = "little_endian"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+to_bytes = { path = "../to_bytes", features = ["little-endian"] }
+
+[lib]
+doctest = false
+
+[workspace]

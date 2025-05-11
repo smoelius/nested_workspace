@@ -1,0 +1,13 @@
+[package]
+name = "nightly"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+rustc_version = "0.4.1"
+
+[lib]
+doctest = false
+
+[workspace]
