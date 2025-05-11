@@ -1,4 +1,5 @@
 use std::{
+    env::remove_var,
     ffi::OsStr,
     fs::{read_dir, read_to_string},
     path::{Path, absolute},
@@ -8,6 +9,13 @@ use trycmd::TestCases;
 
 // smoelius: The following order is intentional.
 const SUBDIRS: [&str; 5] = ["nw_clean", "check", "build", "test", "other"];
+
+#[ctor::ctor]
+fn initialize() {
+    unsafe {
+        remove_var("CARGO_TERM_COLOR");
+    }
+}
 
 #[test]
 fn trycmd() {
