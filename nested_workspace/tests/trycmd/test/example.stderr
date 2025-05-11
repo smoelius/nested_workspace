@@ -1,7 +1,7 @@
 ...
    Compiling nested_workspace_example v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (/home/smoelius/gh/smoelius/nested_workspace/target/debug/deps/nested_workspace_example-[..])
+     Running unittests src/lib.rs ([..]/nested_workspace/target/debug/deps/nested_workspace_example-[..])
 <<< [CWD]/nested_workspace_a
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
