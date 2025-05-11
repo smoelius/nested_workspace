@@ -12,7 +12,7 @@ repository = "https://github.com/smoelius/nested_workspace"
 doctest = false
 
 [dependencies]
-ansi_term = { workspace = true }
+anstyle = { workspace = true }
 anyhow = { workspace = true }
 cargo_metadata = { workspace = true }
 env_logger = { workspace = true }
