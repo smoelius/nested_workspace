@@ -1,4 +1,4 @@
-use ansi_term::Style;
+use anstyle::Style;
 use std::{
     env::current_dir,
     io::{IsTerminal, Write},
@@ -15,23 +15,19 @@ impl<'a> Delimiter<'a> {
     }
 
     fn write_message(&self, opening: bool) {
+        let style = if std::io::stderr().is_terminal() {
+            Style::new().bold()
+        } else {
+            Style::new()
+        };
         let message = format!(
             "{} {}",
             if opening { "<<<" } else { ">>>" },
             self.0.display()
         );
         // smoelius: Writing directly to `stderr` prevents capture by `libtest`.
-        writeln!(
-            std::io::stderr(),
-            "{}",
-            if std::io::stderr().is_terminal() {
-                Style::new().bold()
-            } else {
-                Style::new()
-            }
-            .paint(message)
-        )
-        .expect("failed to write to stderr");
+        writeln!(std::io::stderr(), "{style}{message}{style:#}")
+            .expect("failed to write to stderr");
     }
 }
 
