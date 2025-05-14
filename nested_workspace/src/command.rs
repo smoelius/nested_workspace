@@ -116,6 +116,8 @@ pub fn build_cargo_command<T: AsRef<str> + Debug>(
             command.arg(arg.as_ref());
         }
     }
+    command.env_remove("CARGO");
+    command.env_remove("RUSTC");
     command.env_remove("RUSTUP_TOOLCHAIN");
     Ok(command)
 }
