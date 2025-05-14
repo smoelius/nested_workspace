@@ -105,10 +105,12 @@ pub fn build_cargo_command<T: AsRef<str> + Debug>(
     };
     command.arg(subcommand);
     // smoelius: Do not forward `args` to `cargo build` or `cargo check`. If `args` contains
-    // `--manifest-path ...`, for example, the command could block. Do, however, pass `-vv` as it
-    // aids in debugging.
+    // `--manifest-path ...`, for example, the command could block. Do, however, pass `--workspace`
+    // and `-vv`. The latter aids in debugging.
+    // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
+    // accept such an option. `cargo fmt` is an example.
     if matches!(source, Source::BuildScript) {
-        command.arg("-vv");
+        command.args(["--workspace", "-vv"]);
     } else {
         for arg in args {
             command.arg(arg.as_ref());
