@@ -7,6 +7,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/smoelius/nested_workspace"
+rust-version = "1.87"
 
 [lib]
 doctest = false
