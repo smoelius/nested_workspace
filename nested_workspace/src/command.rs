@@ -1,7 +1,7 @@
 use super::Source;
 use anyhow::{Result, bail, ensure};
 use std::{
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     fmt::Debug,
     io::{self, BufRead},
     path::Path,
@@ -13,16 +13,16 @@ pub enum CargoSubcommand {
     Check,
     Run,
     Test,
-    Other(String),
+    Other(OsString),
 }
 
 impl CargoSubcommand {
-    fn as_str(&self) -> &str {
+    fn as_os_str(&self) -> &OsStr {
         match self {
-            CargoSubcommand::Build => "build",
-            CargoSubcommand::Check => "check",
-            CargoSubcommand::Run => "run",
-            CargoSubcommand::Test => "test",
+            CargoSubcommand::Build => OsStr::new("build"),
+            CargoSubcommand::Check => OsStr::new("check"),
+            CargoSubcommand::Run => OsStr::new("run"),
+            CargoSubcommand::Test => OsStr::new("test"),
             CargoSubcommand::Other(other) => other,
         }
     }
@@ -30,7 +30,7 @@ impl CargoSubcommand {
 
 impl std::fmt::Display for CargoSubcommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
+        write!(f, "{}", self.as_os_str().display())
     }
 }
 
@@ -57,7 +57,7 @@ fn parent_id() -> u32 {
 }
 
 #[expect(clippy::similar_names)]
-pub fn parse_cargo_command<T: AsRef<str> + Debug>(args: &[T]) -> Result<(CargoSubcommand, &[T])> {
+pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(args: &[T]) -> Result<(CargoSubcommand, &[T])> {
     if args.is_empty()
         || !{
             let arg0 = args[0].as_ref();
@@ -72,23 +72,25 @@ pub fn parse_cargo_command<T: AsRef<str> + Debug>(args: &[T]) -> Result<(CargoSu
     parse_cargo_subcommand(&args[1..])
 }
 
-pub fn parse_cargo_subcommand<T: AsRef<str> + Debug>(
+#[expect(clippy::similar_names)]
+pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
     args: &[T],
 ) -> Result<(CargoSubcommand, &[T])> {
     if args.is_empty() {
         bail!("failed to parse Cargo subcommand: {args:?}")
     }
-    let subcommand = match args[0].as_ref() {
-        "build" => CargoSubcommand::Build,
-        "check" => CargoSubcommand::Check,
-        "run" => CargoSubcommand::Run,
-        "test" => CargoSubcommand::Test,
-        other => CargoSubcommand::Other(other.to_owned()),
+    let arg0 = args[0].as_ref();
+    let subcommand = match arg0.to_str() {
+        Some("build") => CargoSubcommand::Build,
+        Some("check") => CargoSubcommand::Check,
+        Some("run") => CargoSubcommand::Run,
+        Some("test") => CargoSubcommand::Test,
+        _ => CargoSubcommand::Other(arg0.to_owned()),
     };
     Ok((subcommand, &args[1..]))
 }
 
-pub fn build_cargo_command<T: AsRef<str> + Debug>(
+pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     source: Source,
     subcommand: &CargoSubcommand,
     args: &[T],
@@ -97,10 +99,10 @@ pub fn build_cargo_command<T: AsRef<str> + Debug>(
     let subcommand = match (&source, &subcommand) {
         // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
         // running `cargo build` would be too much). For all other cases, run `cargo build`.
-        (Source::BuildScript, CargoSubcommand::Check) => "check",
-        (Source::BuildScript, _) => "build",
-        (Source::Test, CargoSubcommand::Test) => "test",
-        (Source::CargoNw, _) => subcommand.as_str(),
+        (Source::BuildScript, CargoSubcommand::Check) => OsStr::new("check"),
+        (Source::BuildScript, _) => OsStr::new("build"),
+        (Source::Test, CargoSubcommand::Test) => OsStr::new("test"),
+        (Source::CargoNw, _) => subcommand.as_os_str(),
         (_, _) => bail!("{source} unexpectedly invoked subcommand `{subcommand}`"),
     };
     command.arg(subcommand);

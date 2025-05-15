@@ -4,6 +4,7 @@ use log::debug;
 use serde::Deserialize;
 use std::{
     env::var,
+    ffi::OsStr,
     fmt::Debug,
     fs::write,
     io::Write,
@@ -85,7 +86,7 @@ fn run_parent_cargo_command_on_current_package_nested_workspace_roots(
     Ok(())
 }
 
-pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<str> + Debug>(
+pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     subcommand: &CargoSubcommand,
     args: &[T],
     dir: &Path,
@@ -102,7 +103,7 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<str> + Debug>
     Ok(())
 }
 
-fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<str> + Debug>(
+fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     source: Source,
     subcommand: &CargoSubcommand,
     args: &[T],
