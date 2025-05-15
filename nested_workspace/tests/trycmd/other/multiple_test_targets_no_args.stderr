@@ -1,0 +1,5 @@
+...
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/package-[..])
+     Running tests/do_not_run.rs (target/debug/deps/do_not_run-[..])
+error: test failed, to rerun pass `--test do_not_run`
