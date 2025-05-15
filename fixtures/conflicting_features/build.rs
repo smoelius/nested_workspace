@@ -1,3 +1,3 @@
 fn main() {
-    nested_workspace::build();
+    nested_workspace::build().unwrap();
 }
