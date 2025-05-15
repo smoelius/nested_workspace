@@ -1,0 +1,24 @@
+
+running 1 test
+test tests::it_works ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test do_not_run ... FAILED
+
+failures:
+
+---- do_not_run stdout ----
+
+thread 'do_not_run' panicked at tests/do_not_run.rs:3:5:
+explicit panic
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    do_not_run
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
