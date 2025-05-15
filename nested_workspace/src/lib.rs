@@ -4,7 +4,7 @@ use log::debug;
 use serde::Deserialize;
 use std::{
     env::var,
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     fmt::Debug,
     fs::write,
     io::Write,
@@ -43,22 +43,83 @@ impl std::fmt::Display for Source {
     }
 }
 
-pub fn build() {
-    try_build().unwrap();
+#[must_use]
+pub fn build() -> Builder {
+    Builder {
+        source: Source::BuildScript,
+        args: Vec::new(),
+    }
 }
 
-pub fn test() {
-    try_test().unwrap();
+#[must_use]
+pub fn test() -> Builder {
+    Builder {
+        source: Source::Test,
+        args: Vec::new(),
+    }
 }
 
-pub fn try_build() -> Result<()> {
-    // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's default
-    // behavior is to run the build script for the first command (`cargo check`), but not again for
-    // the second. However, we need to the build script to be rerun so that we can call `cargo
-    // build` for the nested workspaces. `force_rerun` is a hack to achieve this.
-    force_rerun()?;
+pub struct Builder {
+    source: Source,
+    args: Vec<OsString>,
+}
 
-    run_parent_cargo_command_on_current_package_nested_workspace_roots(Source::BuildScript)
+impl Builder {
+    /// Pass `arg` to subcommand
+    #[must_use]
+    pub fn arg<S>(mut self, arg: S) -> Builder
+    where
+        S: AsRef<OsStr>,
+    {
+        self.args.push(arg.as_ref().to_owned());
+        self
+    }
+
+    /// Pass `args` to subcommand
+    #[must_use]
+    pub fn args<I, S>(mut self, args: I) -> Builder
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        self.args
+            .extend(args.into_iter().map(|arg| arg.as_ref().to_owned()));
+        self
+    }
+
+    pub fn unwrap(self) {
+        // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's default
+        // behavior is to run the build script for the first command (`cargo check`), but not again
+        // for the second. However, we need to the build script to be rerun so that we can
+        // call `cargo build` for the nested workspaces. `force_rerun` is a hack to achieve
+        // this.
+        if matches!(self.source, Source::BuildScript) {
+            force_rerun().unwrap();
+        }
+
+        self.run_parent_cargo_command_on_current_package_nested_workspace_roots()
+            .unwrap();
+    }
+
+    fn run_parent_cargo_command_on_current_package_nested_workspace_roots(self) -> Result<()> {
+        let command = parent_command()?;
+        let args = command.split_ascii_whitespace().collect::<Vec<_>>();
+        let (subcommand, subcommand_args) = parse_cargo_command(&args)?;
+
+        let mut args = self.args;
+        args.extend(subcommand_args.iter().map(OsString::from));
+
+        let roots = current_package_nested_workspace_roots()?;
+
+        run_cargo_subcommand_on_nested_workspace_roots(
+            self.source,
+            &subcommand,
+            &args,
+            &roots,
+            false,
+        )?;
+        Ok(())
+    }
 }
 
 // smoelius: Variant of @juggle-tux's idea here:
@@ -68,21 +129,6 @@ fn force_rerun() -> Result<()> {
     let path = PathBuf::from(out_dir).join("now.txt");
     write(&path, format!("{:?}\n", Instant::now()))?;
     println!("cargo::rerun-if-changed={}", path.display());
-    Ok(())
-}
-
-pub fn try_test() -> Result<()> {
-    run_parent_cargo_command_on_current_package_nested_workspace_roots(Source::Test)
-}
-
-fn run_parent_cargo_command_on_current_package_nested_workspace_roots(
-    source: Source,
-) -> Result<()> {
-    let command = parent_command()?;
-    let args = command.split_ascii_whitespace().collect::<Vec<_>>();
-    let (subcommand, args) = parse_cargo_command(&args)?;
-    let roots = current_package_nested_workspace_roots()?;
-    run_cargo_subcommand_on_nested_workspace_roots(source, &subcommand, args, &roots, false)?;
     Ok(())
 }
 
