@@ -1,4 +1,4 @@
 #[test]
 fn nested_workspace() {
-    nested_workspace::test();
+    nested_workspace::test().unwrap();
 }
