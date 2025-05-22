@@ -1,14 +1,21 @@
+use anyhow::Result;
 use std::{
     env::remove_var,
     ffi::OsStr,
-    fs::{read_dir, read_to_string},
+    fs::{OpenOptions, read_dir, read_to_string},
     path::{Path, absolute},
 };
 use toml::Table;
 use trycmd::TestCases;
 
 // smoelius: The following order is intentional.
-const SUBDIRS: [&str; 5] = ["nw_clean", "check", "build", "test", "other"];
+const SUBDIR_ARGS: &[(&str, &[&str])] = &[
+    ("nw_clean", &["nw", "clean"]),
+    ("check", &["check", "-vv"]),
+    ("build", &["build", "-vv"]),
+    ("test", &["test", "--workspace"]),
+    ("other", &[]),
+];
 
 #[ctor::ctor]
 fn initialize() {
@@ -19,7 +26,7 @@ fn initialize() {
 
 #[test]
 fn trycmd() {
-    for subdir in SUBDIRS {
+    for &(subdir, _) in SUBDIR_ARGS {
         let test_cases = TestCases::new();
 
         test_cases.register_bin("cargo", Path::new(env!("CARGO")));
@@ -35,7 +42,7 @@ fn completeness() {
         let entry = result.unwrap();
         let path = entry.path();
         let filename = path.file_name().unwrap();
-        for subdir in SUBDIRS {
+        for &(subdir, _) in SUBDIR_ARGS {
             if subdir == "other" {
                 continue;
             }
@@ -52,18 +59,21 @@ fn completeness() {
         }
     }
     if !missing.is_empty() {
+        let bless = enabled("BLESS");
         eprintln!("The following files are missing:");
         for path in missing {
             eprintln!("    {}", path.display());
+            if bless {
+                touch(&path).unwrap();
+            }
         }
         panic!();
     }
 }
 
-#[expect(clippy::similar_names)]
 #[test]
 fn correctness() {
-    for subdir in SUBDIRS {
+    for &(subdir, args_expected) in SUBDIR_ARGS {
         if subdir == "other" {
             continue;
         }
@@ -78,7 +88,7 @@ fn correctness() {
             let contents = read_to_string(&path).unwrap();
             let table = toml::from_str::<Table>(&contents).unwrap();
 
-            let args = table
+            let args_actual = table
                 .get("args")
                 .and_then(|value| value.as_array())
                 .and_then(|array| {
@@ -89,6 +99,13 @@ fn correctness() {
                 })
                 .unwrap();
 
+            assert_eq!(
+                args_expected,
+                args_actual,
+                "failed for `{}`",
+                path.display()
+            );
+
             let bin = table
                 .get("bin")
                 .and_then(|value| value.as_table())
@@ -96,13 +113,10 @@ fn correctness() {
                 .and_then(|value| value.as_str())
                 .unwrap();
 
-            let arg0 = args.first().copied().unwrap();
-            if bin == "cargo-nw" {
-                assert_eq!("nw", arg0);
-                let arg1 = args.get(1).copied().unwrap();
-                assert_eq!(subdir, format!("nw_{arg1}"));
+            if subdir == "nw_clean" {
+                assert_eq!("cargo-nw", bin);
             } else {
-                assert_eq!(subdir, arg0);
+                assert_eq!("cargo", bin);
             }
 
             let cwd = table
@@ -118,4 +132,17 @@ fn correctness() {
             assert_eq!(file_stem, fixture);
         }
     }
+}
+
+fn touch(path: &Path) -> Result<()> {
+    OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map(|_| ())
+        .map_err(Into::into)
+}
+
+fn enabled(key: &str) -> bool {
+    std::env::var(key).is_ok_and(|value| value != "0")
 }

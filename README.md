@@ -78,6 +78,32 @@ Furthermore, the following steps are required:
    }
    ```
 
+## Argument handling
+
+### `cargo build` and `cargo check`
+
+All arguments are filtered out; no arguments are forwarded. However, the commands are called with `--workspace` and `-vv`:
+
+- `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
+
+- `-vv` aids in debugging.
+
+### `cargo test`
+
+The following modifications are made:
+
+- `-p <containing-package>` and `--package <containing-package>` are filtered out.
+
+- All arguments besides those covered by the previous bullet are forwarded.
+
+- `--workspace` is added to the arguments so that all packages in a nested workspace are tested, even if a nested workspace contains a root package.
+
+### `cargo nw <subcommand>`
+
+All arguments are forwarded; no arguments are filtered out or added.
+
+A primary reason for this policy is that the arguments accepted by an arbitrary subcommand cannot be predicted. For example, a subcommand might not accept `--workspace`, or it might consider `-p` to mean something other than "package".
+
 ## Why would one need multiple workspaces?
 
 - **Multiple toolchains:** Cargo builds all targets in workspace [with the same toolchain]. If a project needs multiple toolchains, then multiple workspaces are needed. ([Dylint] is an example of such a project.)
