@@ -1,7 +1,0 @@
-args = ["test"]
-
-[bin]
-name = "cargo"
-
-[fs]
-cwd = "../../../../example"
