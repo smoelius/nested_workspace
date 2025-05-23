@@ -1,0 +1,11 @@
+[package]
+name = "root_package"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+doctest = false
+
+[workspace]
+members = ["non_root_package"]
