@@ -1,7 +1,8 @@
+use anyhow::Result;
 use std::{
     env::remove_var,
     ffi::OsStr,
-    fs::{read_dir, read_to_string},
+    fs::{OpenOptions, read_dir, read_to_string},
     path::{Path, absolute},
 };
 use toml::Table;
@@ -52,9 +53,13 @@ fn completeness() {
         }
     }
     if !missing.is_empty() {
+        let bless = enabled("BLESS");
         eprintln!("The following files are missing:");
         for path in missing {
             eprintln!("    {}", path.display());
+            if bless {
+                touch(&path).unwrap();
+            }
         }
         panic!();
     }
@@ -118,4 +123,17 @@ fn correctness() {
             assert_eq!(file_stem, fixture);
         }
     }
+}
+
+fn touch(path: &Path) -> Result<()> {
+    OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map(|_| ())
+        .map_err(Into::into)
+}
+
+fn enabled(key: &str) -> bool {
+    std::env::var(key).is_ok_and(|value| value != "0")
 }
