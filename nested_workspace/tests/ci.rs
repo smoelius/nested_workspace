@@ -21,7 +21,7 @@ fn initialize() {
 
 #[test]
 fn clippy() {
-    Command::new("cargo")
+    let status = Command::new("cargo")
         .args([
             "+nightly",
             "clippy",
@@ -30,8 +30,9 @@ fn clippy() {
             "--",
             "--deny=warnings",
         ])
-        .assert()
-        .success();
+        .status()
+        .unwrap();
+    assert!(status.success());
 }
 
 #[test]
@@ -107,11 +108,12 @@ fn markdown_link_check() {
 
 #[test]
 fn msrv() {
-    Command::new("cargo")
+    let status = Command::new("cargo")
         .args(["msrv", "verify"])
         .current_dir("nested_workspace")
-        .assert()
-        .success();
+        .status()
+        .unwrap();
+    assert!(status.success());
 }
 
 #[test]
