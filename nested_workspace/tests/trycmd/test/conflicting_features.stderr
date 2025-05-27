@@ -3,11 +3,13 @@
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs (target/debug/deps/conflicting_features-[..])
 <<< [CWD]/big_endian
+...
    Compiling big_endian v0.1.0 ([CWD]/big_endian)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs (target/debug/deps/big_endian-[..])
 >>> [CWD]/big_endian
 <<< [CWD]/little_endian
+...
    Compiling little_endian v0.1.0 ([CWD]/little_endian)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs (target/debug/deps/little_endian-[..])
