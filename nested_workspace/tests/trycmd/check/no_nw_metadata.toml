@@ -1,4 +1,4 @@
-args = ["check", "-vv"]
+args = ["check", "-vv", "--offline"]
 
 status = "failed"
 
