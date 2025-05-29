@@ -106,6 +106,19 @@ impl Builder {
         let args = command.split_ascii_whitespace().collect::<Vec<_>>();
         let (subcommand, subcommand_args) = parse_cargo_command(&args)?;
 
+        #[cfg(not(feature = "__disable_offline_check"))]
+        if matches!(subcommand, CargoSubcommand::Build | CargoSubcommand::Check)
+            && !subcommand_args
+                .iter()
+                .any(|&arg| arg == "--frozen" || arg == "--offline")
+        {
+            println!(
+                "cargo::warning=Refusing to {subcommand} as `--offline` was not passed to parent \
+                 command"
+            );
+            return Ok(());
+        }
+
         let mut args = self.args;
         args.extend(subcommand_args.iter().map(OsString::from));
 

@@ -78,6 +78,24 @@ Furthermore, the following steps are required:
    }
    ```
 
+## Known problem: potential deadlocks
+
+Nested Workspace has safeguards to avoid potential deadlocks.
+
+A build script holds a lock on the build directory while running. Furthermore, `cargo check` tries to obtain a lock on the package cache unless `--offline` is passed. Thus, the following scenario could occur:
+
+- Thread A runs `cargo check`, which locks the package cache, locks the build directory, and then releases the lock on the package cache.
+- Thread B runs `cargo check`, which locks the package cache and tries to lock the build directory, but blocks because thread A holds the lock.
+- Thread A runs the build script, which runs `cargo check` and tries to lock the package cache, but blocks because thread B holds the lock.
+
+To avoid this scenario, Nested Workspace checks whether `--offline` was passed to the parent command (i.e., the Cargo command that caused the build script to be run). If not, Nested Workspace exits with a warning like the following:
+
+```
+Refusing to check as `--offline` was not passed to parent command
+```
+
+Thus, in the scenario above, thread A would not hold a lock on the package cache, thereby avoiding the deadlock.
+
 ## Why would one need multiple workspaces?
 
 - **Multiple toolchains:** Cargo builds all targets in workspace [with the same toolchain]. If a project needs multiple toolchains, then multiple workspaces are needed. ([Dylint] is an example of such a project.)

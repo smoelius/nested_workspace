@@ -112,7 +112,7 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
     // accept such an option. `cargo fmt` is an example.
     if matches!(source, Source::BuildScript) {
-        command.args(["-vv", "--workspace"]);
+        command.args(build_or_check_args());
     } else {
         for arg in args {
             command.arg(arg.as_ref());
@@ -122,4 +122,11 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     command.env_remove("RUSTC");
     command.env_remove("RUSTUP_TOOLCHAIN");
     Ok(command)
+}
+
+fn build_or_check_args() -> Vec<OsString> {
+    ["-vv", "--offline", "--workspace"]
+        .iter()
+        .map(OsString::from)
+        .collect::<Vec<_>>()
 }
