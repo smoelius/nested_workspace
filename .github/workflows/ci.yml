@@ -18,7 +18,11 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.environment }}
 
     steps:
       - uses: actions/checkout@v4
@@ -48,3 +52,15 @@ jobs:
 
       - name: Test
         run: cargo test
+
+  all-checks:
+    needs: [test]
+
+    if: ${{ always() }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check results
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
