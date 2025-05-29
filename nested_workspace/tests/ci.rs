@@ -27,6 +27,7 @@ fn clippy() {
             "clippy",
             "--all-features",
             "--all-targets",
+            "--offline",
             "--",
             "--deny=warnings",
         ])
