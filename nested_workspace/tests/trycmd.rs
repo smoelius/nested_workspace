@@ -11,8 +11,8 @@ use trycmd::TestCases;
 // smoelius: The following order is intentional.
 const SUBDIR_ARGS: [(&str, &[&str]); 5] = [
     ("nw_clean", &["nw", "clean"]),
-    ("check", &["check", "-vv"]),
-    ("build", &["build", "-vv"]),
+    ("check", &["check", "-vv", "--offline"]),
+    ("build", &["build", "-vv", "--offline"]),
     ("test", &["test"]),
     ("other", &[]),
 ];

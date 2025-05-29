@@ -1,4 +1,4 @@
-args = ["build", "-vv"]
+args = ["build", "-vv", "--offline"]
 
 [bin]
 name = "cargo"
