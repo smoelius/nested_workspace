@@ -1,0 +1,7 @@
+args = ["nw", "clean"]
+
+[bin]
+name = "cargo-nw"
+
+[fs]
+cwd = "../../../../fixtures/root_and_non_root_packages"
