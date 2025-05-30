@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- BREAKING: Check whether `--offline` was passed to parent command (see [Known problem](https://github.com/smoelius/nested_workspace/?tab=readme-ov-file#known-problem-potential-deadlocks) for additional information) ([#14](https://github.com/smoelius/nested_workspace/pull/14))
+- BREAKING: Change how arguments are handled (see [Argument handling](https://github.com/smoelius/nested_workspace/?tab=readme-ov-file#argument-handling) for additional information) ([c7ff4ba](https://github.com/smoelius/nested_workspace/commit/c7ff4ba785462b315ca39c9d414bad3ac64b69c4))
+
 ## 0.2.0
 
 - Pass `--workspace` to `cargo build` and `cargo check` ([ca14592](https://github.com/smoelius/nested_workspace/commit/ca1459251fe58c7285176f8dd7eb605ea5e3bb06))
