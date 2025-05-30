@@ -111,7 +111,7 @@ fn markdown_link_check() {
 fn msrv() {
     let status = Command::new("cargo")
         .args(["msrv", "verify"])
-        .current_dir("nested_workspace")
+        .current_dir("nested-workspace")
         .status()
         .unwrap();
     assert!(status.success());

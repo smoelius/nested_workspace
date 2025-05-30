@@ -1,6 +1,6 @@
 [workspace]
 exclude = ["fixtures"]
-members = ["example", "nested_workspace"]
+members = ["example", "nested-workspace"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -19,7 +19,7 @@ toml = "0.8"
 trycmd = "0.15"
 walkdir = "2.5"
 
-nested_workspace = { path = "nested_workspace" }
+nested-workspace = { path = "nested-workspace" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }

@@ -204,7 +204,7 @@ fn current_package_nested_workspace_roots() -> Result<Vec<PathBuf>> {
         bail!("failed to find package with manifest at `{cargo_manifest_path}`");
     };
     let Some(roots) = nested_workspace_roots_for_package(package)? else {
-        bail!("package at `{cargo_manifest_path}` has no `nested_workspace` metadata");
+        bail!("package at `{cargo_manifest_path}` has no `nested-workspace` metadata");
     };
     Ok(roots)
 }
@@ -224,7 +224,7 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
     let Some(nested_workspace_value) = package
         .metadata
         .as_object()
-        .and_then(|object| object.get("nested_workspace"))
+        .and_then(|object| object.get("nested-workspace"))
     else {
         return Ok(None);
     };

@@ -58,10 +58,10 @@ jobs:
         run: cargo build --all-targets
 
       - name: Test all but example
-        run: cargo test --workspace --exclude nested_workspace_example --config "$GROUP_RUNNER"
+        run: cargo test --workspace --exclude nested-workspace-example --config "$GROUP_RUNNER"
 
       - name: Test example
-        run: cargo test -p nested_workspace_example
+        run: cargo test -p nested-workspace-example
 
   all-checks:
     needs: [test]

@@ -9,5 +9,5 @@ Caused by:
   --- stderr
 
   thread 'main' panicked at [..]:
-  called `Result::unwrap()` on an `Err` value: package at `[CWD]/Cargo.toml` has no `nested_workspace` metadata
+  called `Result::unwrap()` on an `Err` value: package at `[CWD]/Cargo.toml` has no `nested-workspace` metadata
   note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

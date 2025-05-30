@@ -31,7 +31,7 @@ fn check(nightly: bool) -> Result<()> {
     command.args([
         "check",
         "-vv",
-        "--features=nested_workspace/__disable_offline_check",
+        "--features=nested-workspace/__disable_offline_check",
     ]);
     // smoelius: Commenting out the next line should cause a deadlock.
     command.arg("--offline");
