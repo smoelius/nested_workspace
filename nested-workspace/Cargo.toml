@@ -1,12 +1,12 @@
 [package]
-name = "nested_workspace"
+name = "nested-workspace"
 version = "0.2.0"
 authors = ["Samuel Moelius <sam@moeli.us>"]
 description = "Run Cargo commands on workspaces in workspaces"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
-repository = "https://github.com/smoelius/nested_workspace"
+repository = "https://github.com/smoelius/nested-workspace"
 rust-version = "1.87"
 
 [lib]

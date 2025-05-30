@@ -5,10 +5,10 @@ edition = "2024"
 publish = false
 
 [build-dependencies]
-nested_workspace = { path = "../../nested_workspace" }
+nested-workspace = { path = "../../nested-workspace" }
 
 [dev-dependencies]
-nested_workspace = { path = "../../nested_workspace" }
+nested-workspace = { path = "../../nested-workspace" }
 
 [lib]
 doctest = false

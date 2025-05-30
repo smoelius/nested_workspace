@@ -1,4 +1,4 @@
-# nested_workspace
+# nested-workspace
 
 Run Cargo commands on workspaces in workspaces
 
@@ -11,7 +11,7 @@ Nested Workspace supports the following Cargo subcommands directly:
 Additional Cargo subcommands are supported via the `nw` subcommand, installed with the following command:[^1]
 
 ```sh
-cargo install nested_workspace
+cargo install nested-workspace
 ```
 
 [^1]: `cargo install cargo-nw` will install a [different subcommand], unrelated to Nested Workspace.
@@ -39,19 +39,19 @@ Furthermore, the following steps are required:
 1. In the containing package's Cargo.toml file, create a `nest_workspace` metadata table. The table should contain a `roots` array with the name of each nested workspace. Example:
 
    ```toml
-   [package.metadata.nested_workspace]
+   [package.metadata.nested-workspace]
    roots = [
-      "nested_workspace_a",
-      "nested_workspace_b",
+      "nested-workspace-a",
+      "nested-workspace-b",
       ...
    ]
    ```
 
-2. To enable direct support for `cargo build` and `cargo check`, add `nested_workspace` as `build-dependency` to the containing package's Cargo.toml:
+2. To enable direct support for `cargo build` and `cargo check`, add `nested-workspace` as `build-dependency` to the containing package's Cargo.toml:
 
    ```toml
    [build-dependencies]
-   nested_workspace = "0.1"
+   nested-workspace = "0.1"
    ```
 
    And create a build script (`build.rs`) with the following contents:
@@ -62,11 +62,11 @@ Furthermore, the following steps are required:
    }
    ```
 
-3. To enable direct support for `cargo test`, add `nested_workspace` as `dev-dependency` to the containing package's Cargo.toml:
+3. To enable direct support for `cargo test`, add `nested-workspace` as `dev-dependency` to the containing package's Cargo.toml:
 
    ```toml
    [dev-dependencies]
-   nested_workspace = "0.1"
+   nested-workspace = "0.1"
    ```
 
    And create a test like the following:
