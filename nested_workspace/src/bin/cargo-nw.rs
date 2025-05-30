@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let (subcommand, args) = parse_args(&args)?;
 
     // smoelius: Run on current package or workspace.
-    let mut command = build_cargo_command(Source::CargoNw, &subcommand, args)?;
+    let mut command = build_cargo_command(Source::CargoNw, None, &subcommand, args)?;
     let status = command.status()?;
     ensure!(status.success(), "command failed: {command:?}");
 

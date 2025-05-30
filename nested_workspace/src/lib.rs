@@ -176,9 +176,10 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         }
         return Ok(());
     }
+    let package_name = var("CARGO_PKG_NAME").ok();
     for root in roots {
         let _delimiter = Delimiter::new(root);
-        let mut command = build_cargo_command(source, subcommand, args)?;
+        let mut command = build_cargo_command(source, package_name.as_deref(), subcommand, args)?;
         command.current_dir(root);
         debug!("{source}: {:?}", &command);
         let status = command.status()?;

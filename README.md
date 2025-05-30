@@ -78,6 +78,34 @@ Furthermore, the following steps are required:
    }
    ```
 
+## Argument handling
+
+### `cargo build` and `cargo check`
+
+All arguments are filtered out; no arguments are forwarded. However, the commands are called with `-vv`, `--offline`, and `--workspace`:
+
+- `-vv` aids in debugging.
+
+- `--offline` avoids potential deadlocks (see [Known problem] below).
+
+- `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
+
+### `cargo test`
+
+The following modifications are made:
+
+- `-p <containing-package>` and `--package <containing-package>` are filtered out.
+
+- All arguments besides those covered by the previous bullet are forwarded.
+
+- `--workspace` is added to the arguments so that all packages in a nested workspace are tested, even if a nested workspace contains a root package.
+
+### `cargo nw <subcommand>`
+
+All arguments are forwarded; no arguments are filtered out or added.
+
+A primary reason for this policy is that the arguments accepted by an arbitrary subcommand cannot be predicted. For example, a subcommand might not accept `--workspace`, or it might consider `-p` to mean something other than "package".
+
 ## Known problem: potential deadlocks
 
 Nested Workspace has safeguards to avoid potential deadlocks.
@@ -112,6 +140,7 @@ Nested Workspace needs a _trigger_ to run a subcommand:
 For other subcommands, there is no obvious trigger. Hence, other subcommands must be run with `cargo nw <subcommand>`.
 
 [Dylint]: https://github.com/trailofbits/dylint
+[Known problem]: #known-problem-potential-deadlocks
 [`gix-transport`]: https://github.com/GitoxideLabs/gitoxide/blob/8c353ea00c805604113a567d2f5157be94cc9f28/gix-transport/src/client/blocking_io/http/mod.rs#L25-L26
 [different subcommand]: https://github.com/aspectron/cargo-nw
 [example]: ./example

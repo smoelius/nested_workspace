@@ -92,32 +92,39 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
 
 pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     source: Source,
+    package_name: Option<&str>,
     subcommand: &CargoSubcommand,
     args: &[T],
 ) -> Result<Command> {
     let mut command = Command::new("cargo");
-    let subcommand = match (&source, &subcommand) {
+    let (subcommand, args) = match (&source, &subcommand) {
         // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
         // running `cargo build` would be too much). For all other cases, run `cargo build`.
-        (Source::BuildScript, CargoSubcommand::Check) => OsStr::new("check"),
-        (Source::BuildScript, _) => OsStr::new("build"),
-        (Source::Test, CargoSubcommand::Test) => OsStr::new("test"),
-        (Source::CargoNw, _) => subcommand.as_os_str(),
+        // smoelius: Do not forward `args` to `cargo build` or `cargo check`. If `args` contains
+        // `--manifest-path ...`, for example, the command could block. Do, however, pass `-vv` and
+        // `--workspace`. The former aids in debugging.
+        (Source::BuildScript, CargoSubcommand::Check) => {
+            (OsStr::new("check"), build_or_check_args())
+        }
+        (Source::BuildScript, _subcommand_other_than_check) => {
+            (OsStr::new("build"), build_or_check_args())
+        }
+        (Source::Test, CargoSubcommand::Test) => {
+            let args = std::iter::once(OsString::from("--workspace"))
+                .chain(filter_package_and_workspace(package_name, args))
+                .collect();
+            (OsStr::new("test"), args)
+        }
+        // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
+        // accept such an option. `cargo fmt` is an example.
+        (Source::CargoNw, _) => {
+            let args = args.iter().map(OsString::from).collect();
+            (subcommand.as_os_str(), args)
+        }
         (_, _) => bail!("{source} unexpectedly invoked subcommand `{subcommand}`"),
     };
     command.arg(subcommand);
-    // smoelius: Do not forward `args` to `cargo build` or `cargo check`. If `args` contains
-    // `--manifest-path ...`, for example, the command could block. Do, however, pass `-vv` and
-    // `--workspace`. The former aids in debugging.
-    // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
-    // accept such an option. `cargo fmt` is an example.
-    if matches!(source, Source::BuildScript) {
-        command.args(build_or_check_args());
-    } else {
-        for arg in args {
-            command.arg(arg.as_ref());
-        }
-    }
+    command.args(args);
     command.env_remove("CARGO");
     command.env_remove("RUSTC");
     command.env_remove("RUSTUP_TOOLCHAIN");
@@ -129,4 +136,29 @@ fn build_or_check_args() -> Vec<OsString> {
         .iter()
         .map(OsString::from)
         .collect::<Vec<_>>()
+}
+
+fn filter_package_and_workspace<T: AsRef<OsStr> + Debug>(
+    package_name: Option<&str>,
+    args_in: &[T],
+) -> Vec<OsString> {
+    let Some(package_name) = package_name.map(OsStr::new) else {
+        return args_in.iter().map(OsString::from).collect();
+    };
+    let mut args_out = Vec::new();
+    let mut iter = args_in.iter().peekable();
+    while let Some(arg) = iter.next() {
+        let arg_as_ref = arg.as_ref();
+        if (arg_as_ref == OsStr::new("-p") || arg_as_ref == OsStr::new("--package"))
+            && iter.peek().map(AsRef::as_ref) == Some(package_name)
+        {
+            let _: Option<&T> = iter.next();
+            continue;
+        }
+        if arg_as_ref == OsStr::new("--workspace") {
+            continue;
+        }
+        args_out.push(arg_as_ref.to_owned());
+    }
+    args_out
 }
