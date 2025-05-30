@@ -1,4 +1,4 @@
-args = ["test"]
+args = ["test", "--workspace"]
 
 [bin]
 name = "cargo"
