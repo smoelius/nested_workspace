@@ -1,7 +1,7 @@
 ...
-   Compiling multi_layer v0.1.0 ([CWD])
+   Compiling multilayer v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/multi_layer-[..])
+     Running unittests src/lib.rs (target/debug/deps/multilayer-[..])
 <<< [CWD]/workspace
 ...
    Compiling single_layer v0.1.0 ([CWD]/workspace/single_layer)
