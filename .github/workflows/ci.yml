@@ -24,6 +24,9 @@ jobs:
 
     runs-on: ${{ matrix.environment }}
 
+    env:
+      GROUP_RUNNER: target.'cfg(all())'.runner = 'group-runner'
+
     steps:
       - uses: actions/checkout@v4
 
@@ -49,12 +52,16 @@ jobs:
           rustup component add clippy --toolchain nightly
           cargo install cargo-dylint dylint-link || true
           cargo install cargo-msrv               || true
+          cargo install group-runner             || true
 
       - name: Build
         run: cargo build --all-targets
 
-      - name: Test
-        run: cargo test
+      - name: Test all but example
+        run: cargo test --workspace --exclude nested_workspace_example --config "$GROUP_RUNNER"
+
+      - name: Test example
+        run: cargo test -p nested_workspace_example
 
   all-checks:
     needs: [test]
