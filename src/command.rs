@@ -1,9 +1,8 @@
 use super::Source;
-use anyhow::{Result, bail, ensure};
+use anyhow::{Result, bail};
 use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
-    io::{self, BufRead},
     path::Path,
     process::Command,
 };
@@ -34,26 +33,82 @@ impl std::fmt::Display for CargoSubcommand {
     }
 }
 
-pub fn parent_command() -> Result<String> {
-    let ppid = parent_id();
-    let mut command = Command::new("ps");
-    command.args(["-p", &ppid.to_string(), "-o", "args="]);
-    let output = command.output()?;
-    ensure!(output.status.success(), "command failed: {command:?}");
-    let lines = output.stdout.lines().collect::<io::Result<Vec<_>>>()?;
-    let [line] = &lines[..] else {
-        bail!(
-            "expected one line but found {} in command output: {:?}",
-            lines.len(),
-            command
-        );
-    };
-    Ok(line.clone())
-}
+pub use os_specific::parent_command;
 
 #[cfg(unix)]
-fn parent_id() -> u32 {
-    std::os::unix::process::parent_id()
+mod os_specific {
+    use anyhow::{Result, bail, ensure};
+    use std::os::unix::process::parent_id;
+    use std::{
+        io::{self, BufRead},
+        process::Command,
+    };
+
+    pub fn parent_command() -> Result<String> {
+        let ppid = parent_id();
+        let mut command = Command::new("ps");
+        command.args(["-p", &ppid.to_string(), "-o", "args="]);
+        let output = command.output()?;
+        ensure!(output.status.success(), "command failed: {command:?}");
+        let lines = output.stdout.lines().collect::<io::Result<Vec<_>>>()?;
+        let [line] = &lines[..] else {
+            bail!(
+                "expected one line but found {} in command output: {:?}",
+                lines.len(),
+                command
+            );
+        };
+        Ok(line.clone())
+    }
+}
+
+#[cfg(windows)]
+mod os_specific {
+    use anyhow::{Context, Result, bail, ensure};
+    use std::{
+        process::{Command, id},
+        str::FromStr,
+    };
+
+    pub fn parent_command() -> Result<String> {
+        let ppid = parent_id()?;
+        wmic::<String>(ppid, "CommandLine")
+    }
+
+    // smoelius: Based on:
+    // https://stackoverflow.com/questions/7486717/finding-parent-process-id-on-windows
+    fn parent_id() -> Result<u32> {
+        wmic::<u32>(id(), "ParentProcessId")
+    }
+
+    fn wmic<T>(pid: u32, property: &str) -> Result<T>
+    where
+        T: FromStr,
+        Result<T, <T as FromStr>::Err>: Context<T, <T as FromStr>::Err>,
+    {
+        let mut command = Command::new("wmic");
+        command.args([
+            "process",
+            "where",
+            &format!("processid='{pid}'"),
+            "get",
+            property,
+        ]);
+        let output = command.output()?;
+        ensure!(output.status.success(), "command failed: {command:?}");
+        let stdout = String::from_utf8(output.stdout)?;
+        let mut lines = wmic_lines(&stdout);
+        let line = match (lines.next(), lines.next()) {
+            (Some(header), Some(line)) if property == header => line,
+            _ => bail!("unexpected output format: {stdout:?}"),
+        };
+        str::parse::<T>(line)
+            .with_context(|| format!("failed to parse line as {property}: {line:?}"))
+    }
+
+    fn wmic_lines(output: &str) -> impl Iterator<Item = &str> {
+        output.split("\r\r\n").map(str::trim_end)
+    }
 }
 
 #[expect(clippy::similar_names)]
