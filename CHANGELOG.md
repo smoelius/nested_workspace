@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Correct examples in documentation ([#19](https://github.com/smoelius/nested_workspace/pull/19))
+
 ## 0.3.0
 
 - BREAKING: Check whether `--offline` was passed to parent command (see [Known problem](https://github.com/smoelius/nested_workspace/?tab=readme-ov-file#known-problem-potential-deadlocks) for additional information) ([#14](https://github.com/smoelius/nested_workspace/pull/14))
