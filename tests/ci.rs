@@ -88,7 +88,7 @@ fn fixtures_are_unpublishable() {
     }
 }
 
-#[cfg_attr(target_os = "windows", ignore)]
+#[cfg_attr(target_os = "windows", ignore = "`markdown_link_check` not installed")]
 #[test]
 fn markdown_link_check() {
     let tempdir = tempdir().unwrap();
