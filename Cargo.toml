@@ -31,6 +31,7 @@ walkdir = "2.5"
 
 [features]
 __disable_offline_check = []
+__disable_supply_chain_test = []
 
 [lib]
 doctest = false

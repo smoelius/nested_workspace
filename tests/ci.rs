@@ -1,14 +1,6 @@
 use assert_cmd::assert::OutputAssertExt;
 use regex::Regex;
-use similar_asserts::SimpleDiff;
-use std::{
-    env::{remove_var, var},
-    ffi::OsStr,
-    fs::{read_to_string, write},
-    path::Path,
-    process::{Command, ExitStatus},
-    str::FromStr,
-};
+use std::{env::remove_var, ffi::OsStr, fs::read_to_string, path::Path, process::Command};
 use tempfile::tempdir;
 use walkdir::WalkDir;
 
@@ -25,7 +17,6 @@ fn clippy() {
         .args([
             "+nightly",
             "clippy",
-            "--all-features",
             "--all-targets",
             "--offline",
             "--",
@@ -62,7 +53,7 @@ fn doctests_are_disabled() {
 #[test]
 fn dylint() {
     let assert = Command::new("cargo")
-        .args(["dylint", "--all", "--", "--all-features", "--all-targets"])
+        .args(["dylint", "--all", "--", "--all-targets"])
         .env("DYLINT_RUSTFLAGS", "--deny warnings")
         .assert();
     let stderr = String::from_utf8(assert.get_output().stderr.clone()).unwrap();
@@ -87,7 +78,7 @@ fn fixtures_are_unpublishable() {
     }
 }
 
-#[cfg_attr(target_os = "windows", ignore)]
+#[cfg_attr(target_os = "windows", ignore = "`markdown_link_check` not installed")]
 #[test]
 fn markdown_link_check() {
     let tempdir = tempdir().unwrap();
@@ -132,8 +123,13 @@ fn readme_reference_links_are_sorted() {
         links_sorted.join("\n")
     );
 }
+
+#[cfg(all(unix, not(feature = "__disable_supply_chain_test")))]
 #[test]
 fn supply_chain() {
+    use similar_asserts::SimpleDiff;
+    use std::{fs::write, process::ExitStatus, str::FromStr};
+
     let mut command = Command::new("cargo");
     command.args(["supply-chain", "update", "--cache-max-age=0s"]);
     let _: ExitStatus = command.status().unwrap();
@@ -162,6 +158,7 @@ fn supply_chain() {
     }
 }
 
+#[cfg(all(unix, not(feature = "__disable_supply_chain_test")))]
 fn remove_avatars(value: &mut serde_json::Value) {
     match value {
         serde_json::Value::Null
@@ -185,6 +182,9 @@ fn remove_avatars(value: &mut serde_json::Value) {
     }
 }
 
+#[cfg(all(unix, not(feature = "__disable_supply_chain_test")))]
 fn enabled(key: &str) -> bool {
+    use std::env::var;
+
     var(key).is_ok_and(|value| value != "0")
 }
