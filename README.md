@@ -58,7 +58,7 @@ Furthermore, the following steps are required:
 
    ```rs
    fn main() {
-       nested_workspace::build();
+       nested_workspace::build().unwrap();
    }
    ```
 
@@ -74,7 +74,7 @@ Furthermore, the following steps are required:
    ```rs
    #[test]
    fn nested_workspace() {
-       nested_workspace::test();
+       nested_workspace::test().unwrap();
    }
    ```
 
