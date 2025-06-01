@@ -1,0 +1,7 @@
+args = ["nw", "fetch"]
+
+[bin]
+name = "cargo-nw"
+
+[fs]
+cwd = "../../../fixtures/git_dependency"

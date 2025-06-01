@@ -9,12 +9,13 @@ use toml::Table;
 use trycmd::TestCases;
 
 // smoelius: The following order is intentional.
-const SUBDIR_ARGS: [(&str, &[&str]); 5] = [
+const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
+    ("before", &[]),
     ("nw_clean", &["nw", "clean"]),
     ("check", &["check", "-vv", "--offline"]),
     ("build", &["build", "-vv", "--offline"]),
     ("test", &["test", "--workspace"]),
-    ("other", &[]),
+    ("after", &[]),
 ];
 
 #[ctor::ctor]
@@ -43,7 +44,7 @@ fn completeness() {
         let path = entry.path();
         let filename = path.file_name().unwrap();
         for (subdir, _) in SUBDIR_ARGS {
-            if subdir == "other" {
+            if subdir == "before" || subdir == "after" {
                 continue;
             }
             for extension in ["stderr", "stdout", "toml"] {
@@ -74,7 +75,7 @@ fn completeness() {
 #[test]
 fn correctness() {
     for (subdir, args_expected) in SUBDIR_ARGS {
-        if subdir == "other" {
+        if subdir == "before" || subdir == "after" {
             continue;
         }
         let path = Path::new("tests/trycmd").join(subdir);
@@ -96,12 +97,11 @@ fn correctness() {
                         .iter()
                         .map(|value| value.as_str())
                         .collect::<Option<Vec<_>>>()
-                })
-                .unwrap();
+                });
 
             assert_eq!(
-                args_expected,
-                args_actual,
+                Some(args_expected),
+                args_actual.as_deref(),
                 "failed for `{}`",
                 path.display()
             );

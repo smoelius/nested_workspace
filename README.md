@@ -124,6 +124,23 @@ Refusing to check as `--offline` was not passed to parent command
 
 Thus, in the scenario above, thread A would not hold a lock on the package cache, thereby avoiding the deadlock.
 
+## Git dependencies
+
+Using `cargo check --offline` with Git dependencies can result in errors like the following:
+
+```
+error: failed to get `clippy_utils` as a dependency of ...
+...
+Caused by:
+  can't checkout from 'https://github.com/rust-lang/rust-clippy': you are in the offline mode (--offline)
+```
+
+To avoid such errors, we recommend running `cargo nw fetch` beforehand, e.g.:
+
+```sh
+cargo nw fetch && cargo check --offline
+```
+
 ## Why would one need multiple workspaces?
 
 - **Multiple toolchains:** Cargo builds all targets in workspace [with the same toolchain]. If a project needs multiple toolchains, then multiple workspaces are needed. ([Dylint] is an example of such a project.)
