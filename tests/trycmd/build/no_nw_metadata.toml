@@ -6,4 +6,4 @@ status = "failed"
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/no_nw_metadata"
+cwd = "../../../fixtures/no_nw_metadata"

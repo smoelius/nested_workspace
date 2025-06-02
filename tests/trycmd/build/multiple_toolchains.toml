@@ -4,4 +4,4 @@ args = ["build", "-vv", "--offline"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/multiple_toolchains"
+cwd = "../../../fixtures/multiple_toolchains"
