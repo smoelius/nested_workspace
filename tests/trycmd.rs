@@ -38,7 +38,7 @@ fn trycmd() {
 #[test]
 fn completeness() {
     let mut missing = Vec::new();
-    for result in read_dir("../fixtures").unwrap() {
+    for result in read_dir("fixtures").unwrap() {
         let entry = result.unwrap();
         let path = entry.path();
         let filename = path.file_name().unwrap();

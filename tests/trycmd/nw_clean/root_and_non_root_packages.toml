@@ -4,4 +4,4 @@ args = ["nw", "clean"]
 name = "cargo-nw"
 
 [fs]
-cwd = "../../../../fixtures/root_and_non_root_packages"
+cwd = "../../../fixtures/root_and_non_root_packages"

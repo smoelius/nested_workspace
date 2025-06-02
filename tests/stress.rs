@@ -35,7 +35,7 @@ fn check(nightly: bool) -> Result<()> {
     ]);
     // smoelius: Commenting out the next line should cause a deadlock.
     command.arg("--offline");
-    command.current_dir("../example");
+    command.current_dir("example");
     let status = command.status().unwrap();
     ensure!(status.success());
     Ok(())

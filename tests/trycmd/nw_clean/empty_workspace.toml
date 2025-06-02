@@ -4,4 +4,4 @@ args = ["nw", "clean"]
 name = "cargo-nw"
 
 [fs]
-cwd = "../../../../fixtures/empty_workspace"
+cwd = "../../../fixtures/empty_workspace"

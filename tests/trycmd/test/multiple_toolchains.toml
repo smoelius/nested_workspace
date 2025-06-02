@@ -4,4 +4,4 @@ args = ["test", "--workspace"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/multiple_toolchains"
+cwd = "../../../fixtures/multiple_toolchains"

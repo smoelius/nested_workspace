@@ -4,4 +4,4 @@ args = ["test", "--workspace"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/multilayer"
+cwd = "../../../fixtures/multilayer"

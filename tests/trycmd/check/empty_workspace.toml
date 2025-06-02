@@ -6,4 +6,4 @@ status = "failed"
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/empty_workspace"
+cwd = "../../../fixtures/empty_workspace"

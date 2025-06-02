@@ -1,12 +1,6 @@
 use assert_cmd::assert::OutputAssertExt;
 use regex::Regex;
-use std::{
-    env::{remove_var, set_current_dir},
-    ffi::OsStr,
-    fs::read_to_string,
-    path::Path,
-    process::Command,
-};
+use std::{env::remove_var, ffi::OsStr, fs::read_to_string, path::Path, process::Command};
 use tempfile::tempdir;
 use toml::{Table, Value};
 use walkdir::WalkDir;
@@ -16,7 +10,6 @@ fn initialize() {
     unsafe {
         remove_var("CARGO_TERM_COLOR");
     }
-    set_current_dir("..");
 }
 
 #[test]
@@ -38,7 +31,7 @@ fn clippy() {
 
 #[test]
 fn doctests_are_disabled() {
-    for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("..")) {
+    for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR"))) {
         let entry = result.unwrap();
         let path = entry.path();
         if path.file_name() != Some(OsStr::new("Cargo.toml")) {
@@ -71,7 +64,7 @@ fn dylint() {
 
 #[test]
 fn fixtures_are_unpublishable() {
-    for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("../fixtures")) {
+    for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures")) {
         let entry = result.unwrap();
         let path = entry.path();
         if path.file_name() != Some(OsStr::new("Cargo.toml")) {
@@ -98,7 +91,7 @@ fn markdown_link_check() {
         .assert()
         .success();
 
-    let readme_md = concat!(env!("CARGO_MANIFEST_DIR"), "/../README.md");
+    let readme_md = concat!(env!("CARGO_MANIFEST_DIR"), "/README.md");
 
     Command::new("npx")
         .args(["markdown-link-check", readme_md])
@@ -111,7 +104,6 @@ fn markdown_link_check() {
 fn msrv() {
     let status = Command::new("cargo")
         .args(["msrv", "verify"])
-        .current_dir("nested_workspace")
         .status()
         .unwrap();
     assert!(status.success());

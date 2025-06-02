@@ -4,4 +4,4 @@ args = ["build", "-vv", "--offline"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/conflicting_features"
+cwd = "../../../fixtures/conflicting_features"

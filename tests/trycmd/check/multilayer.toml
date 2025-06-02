@@ -4,4 +4,4 @@ args = ["check", "-vv", "--offline"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/multilayer"
+cwd = "../../../fixtures/multilayer"

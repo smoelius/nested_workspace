@@ -4,4 +4,4 @@ args = ["build", "-vv", "--offline"]
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/root_and_non_root_packages"
+cwd = "../../../fixtures/root_and_non_root_packages"

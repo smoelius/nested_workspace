@@ -6,4 +6,4 @@ status = "failed"
 name = "cargo"
 
 [fs]
-cwd = "../../../../fixtures/multiple_test_targets/package"
+cwd = "../../../fixtures/multiple_test_targets/package"
