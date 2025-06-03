@@ -1,0 +1,729 @@
+{
+  "crates_io_crates": {
+    "aho-corasick": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "anstream": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "anstyle": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "anstyle-parse": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "anstyle-query": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "anstyle-wincon": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "anyhow": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "camino": [
+      {
+        "id": 1139,
+        "kind": "user",
+        "login": "Manishearth",
+        "name": "Manish Goregaokar"
+      },
+      {
+        "id": 6738,
+        "kind": "user",
+        "login": "sunshowers",
+        "name": "Rain"
+      }
+    ],
+    "cargo-platform": [
+      {
+        "id": 4282,
+        "kind": "team",
+        "login": "github:rust-lang:release-publishers",
+        "name": "release-publishers"
+      },
+      {
+        "id": 55123,
+        "kind": "user",
+        "login": "rust-lang-owner",
+        "name": null
+      }
+    ],
+    "cargo_metadata": [
+      {
+        "id": 1471,
+        "kind": "user",
+        "login": "oli-obk",
+        "name": "Oli Scherer"
+      }
+    ],
+    "colorchoice": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "crossbeam-deque": [
+      {
+        "id": 2347,
+        "kind": "user",
+        "login": "jeehoonkang",
+        "name": "Jeehoon Kang"
+      },
+      {
+        "id": 2356,
+        "kind": "team",
+        "login": "github:crossbeam-rs:admins",
+        "name": "admins"
+      },
+      {
+        "id": 2915,
+        "kind": "user",
+        "login": "Amanieu",
+        "name": "Amanieu d'Antras"
+      },
+      {
+        "id": 33035,
+        "kind": "user",
+        "login": "taiki-e",
+        "name": "Taiki Endo"
+      }
+    ],
+    "crossbeam-epoch": [
+      {
+        "id": 2347,
+        "kind": "user",
+        "login": "jeehoonkang",
+        "name": "Jeehoon Kang"
+      },
+      {
+        "id": 2356,
+        "kind": "team",
+        "login": "github:crossbeam-rs:admins",
+        "name": "admins"
+      },
+      {
+        "id": 2915,
+        "kind": "user",
+        "login": "Amanieu",
+        "name": "Amanieu d'Antras"
+      },
+      {
+        "id": 33035,
+        "kind": "user",
+        "login": "taiki-e",
+        "name": "Taiki Endo"
+      }
+    ],
+    "crossbeam-utils": [
+      {
+        "id": 2347,
+        "kind": "user",
+        "login": "jeehoonkang",
+        "name": "Jeehoon Kang"
+      },
+      {
+        "id": 2356,
+        "kind": "team",
+        "login": "github:crossbeam-rs:admins",
+        "name": "admins"
+      },
+      {
+        "id": 2915,
+        "kind": "user",
+        "login": "Amanieu",
+        "name": "Amanieu d'Antras"
+      },
+      {
+        "id": 33035,
+        "kind": "user",
+        "login": "taiki-e",
+        "name": "Taiki Endo"
+      }
+    ],
+    "either": [
+      {
+        "id": 356,
+        "kind": "user",
+        "login": "bluss",
+        "name": "bluss"
+      },
+      {
+        "id": 539,
+        "kind": "user",
+        "login": "cuviper",
+        "name": "Josh Stone"
+      },
+      {
+        "id": 1442,
+        "kind": "user",
+        "login": "jswrenn",
+        "name": "Jack Wrenn"
+      }
+    ],
+    "env_filter": [
+      {
+        "id": 460,
+        "kind": "team",
+        "login": "github:rust-cli:maintainers",
+        "name": "Maintainers"
+      },
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "env_logger": [
+      {
+        "id": 3,
+        "kind": "user",
+        "login": "huonw",
+        "name": "Huon Wilson"
+      },
+      {
+        "id": 5,
+        "kind": "user",
+        "login": "sfackler",
+        "name": "Steven Fackler"
+      },
+      {
+        "id": 14,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:log-owners",
+        "name": "log-owners"
+      },
+      {
+        "id": 51,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:libs",
+        "name": "libs"
+      },
+      {
+        "id": 2851,
+        "kind": "team",
+        "login": "github:env-logger-rs:publishers",
+        "name": "Publishers"
+      },
+      {
+        "id": 8602,
+        "kind": "user",
+        "login": "sebasmagri",
+        "name": "Sebastián Magrí"
+      }
+    ],
+    "equivalent": [
+      {
+        "id": 539,
+        "kind": "user",
+        "login": "cuviper",
+        "name": "Josh Stone"
+      }
+    ],
+    "hashbrown": [
+      {
+        "id": 2915,
+        "kind": "user",
+        "login": "Amanieu",
+        "name": "Amanieu d'Antras"
+      },
+      {
+        "id": 55123,
+        "kind": "user",
+        "login": "rust-lang-owner",
+        "name": null
+      }
+    ],
+    "indexmap": [
+      {
+        "id": 356,
+        "kind": "user",
+        "login": "bluss",
+        "name": "bluss"
+      },
+      {
+        "id": 539,
+        "kind": "user",
+        "login": "cuviper",
+        "name": "Josh Stone"
+      }
+    ],
+    "is_terminal_polyfill": [
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "itoa": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "jiff": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "jiff-static": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "log": [
+      {
+        "id": 3,
+        "kind": "user",
+        "login": "huonw",
+        "name": "Huon Wilson"
+      },
+      {
+        "id": 5,
+        "kind": "user",
+        "login": "sfackler",
+        "name": "Steven Fackler"
+      },
+      {
+        "id": 14,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:log-owners",
+        "name": "log-owners"
+      },
+      {
+        "id": 51,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:libs",
+        "name": "libs"
+      },
+      {
+        "id": 3204,
+        "kind": "user",
+        "login": "KodrAus",
+        "name": "Ashley Mannix"
+      },
+      {
+        "id": 55123,
+        "kind": "user",
+        "login": "rust-lang-owner",
+        "name": null
+      }
+    ],
+    "memchr": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "once_cell_polyfill": [
+      {
+        "id": 6743,
+        "kind": "user",
+        "login": "epage",
+        "name": "Ed Page"
+      }
+    ],
+    "portable-atomic": [
+      {
+        "id": 33035,
+        "kind": "user",
+        "login": "taiki-e",
+        "name": "Taiki Endo"
+      }
+    ],
+    "portable-atomic-util": [
+      {
+        "id": 33035,
+        "kind": "user",
+        "login": "taiki-e",
+        "name": "Taiki Endo"
+      }
+    ],
+    "proc-macro2": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "quote": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "rayon": [
+      {
+        "id": 539,
+        "kind": "user",
+        "login": "cuviper",
+        "name": "Josh Stone"
+      },
+      {
+        "id": 1386,
+        "kind": "user",
+        "login": "nikomatsakis",
+        "name": "Niko Matsakis"
+      }
+    ],
+    "rayon-core": [
+      {
+        "id": 539,
+        "kind": "user",
+        "login": "cuviper",
+        "name": "Josh Stone"
+      },
+      {
+        "id": 1386,
+        "kind": "user",
+        "login": "nikomatsakis",
+        "name": "Niko Matsakis"
+      }
+    ],
+    "regex": [
+      {
+        "id": 1,
+        "kind": "user",
+        "login": "alexcrichton",
+        "name": "Alex Crichton"
+      },
+      {
+        "id": 11,
+        "kind": "team",
+        "login": "github:rust-lang:libs",
+        "name": "libs"
+      },
+      {
+        "id": 19,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:regex-owners",
+        "name": "regex-owners"
+      },
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "regex-automata": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "regex-syntax": [
+      {
+        "id": 1,
+        "kind": "user",
+        "login": "alexcrichton",
+        "name": "Alex Crichton"
+      },
+      {
+        "id": 11,
+        "kind": "team",
+        "login": "github:rust-lang:libs",
+        "name": "libs"
+      },
+      {
+        "id": 19,
+        "kind": "team",
+        "login": "github:rust-lang-nursery:regex-owners",
+        "name": "regex-owners"
+      },
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "ryu": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "semver": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "serde": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      },
+      {
+        "id": 8138,
+        "kind": "team",
+        "login": "github:serde-rs:publish",
+        "name": "publish"
+      }
+    ],
+    "serde_derive": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      },
+      {
+        "id": 8138,
+        "kind": "team",
+        "login": "github:serde-rs:publish",
+        "name": "publish"
+      }
+    ],
+    "serde_json": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      },
+      {
+        "id": 8138,
+        "kind": "team",
+        "login": "github:serde-rs:publish",
+        "name": "publish"
+      }
+    ],
+    "syn": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "thiserror": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "thiserror-impl": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "unicode-ident": [
+      {
+        "id": 3618,
+        "kind": "user",
+        "login": "dtolnay",
+        "name": "David Tolnay"
+      }
+    ],
+    "utf8parse": [
+      {
+        "id": 1317,
+        "kind": "user",
+        "login": "jwilm",
+        "name": "Joe Wilm"
+      },
+      {
+        "id": 1911,
+        "kind": "team",
+        "login": "github:alacritty:publishers",
+        "name": "Publishers"
+      },
+      {
+        "id": 8732,
+        "kind": "user",
+        "login": "chrisduerr",
+        "name": "Christian Duerr"
+      }
+    ],
+    "windows-sys": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows-targets": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_aarch64_gnullvm": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_aarch64_msvc": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_i686_gnu": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_i686_gnullvm": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_i686_msvc": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_x86_64_gnu": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_x86_64_gnullvm": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ],
+    "windows_x86_64_msvc": [
+      {
+        "id": 64539,
+        "kind": "user",
+        "login": "kennykerr",
+        "name": "Kenny Kerr"
+      }
+    ]
+  },
+  "not_audited": {
+    "foreign_crates": [],
+    "local_crates": [
+      "nested_workspace",
+      "nested_workspace_example"
+    ]
+  }
+}
