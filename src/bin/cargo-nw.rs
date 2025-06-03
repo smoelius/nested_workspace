@@ -24,8 +24,8 @@ fn main() -> Result<()> {
 
 fn parse_args(args: &[String]) -> Result<(CargoSubcommand, &[String])> {
     let (subcommand, args) = parse_cargo_command(args)?;
-    if !matches!(subcommand, CargoSubcommand::Other(other) if other == "nw") {
-        bail!("failed to parse `cargo nw` arguments: {args:?}")
+    if !matches!(&subcommand, CargoSubcommand::Other(other) if other == "nw") {
+        bail!("failed to parse `cargo nw` arguments: {subcommand} {args:?}")
     }
     parse_cargo_subcommand(args)
 }
