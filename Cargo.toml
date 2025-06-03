@@ -12,7 +12,8 @@ rust-version = "1.87"
 [dependencies]
 anstyle = "1.0"
 anyhow = "1.0"
-cargo_metadata = "0.19"
+# smoelius: `cargo_metadata` 0.20.0 pulls in too many new dependencies.
+cargo_metadata = "=0.19"
 env_logger = "0.11"
 log = "0.4"
 serde = "1.0"
