@@ -2,6 +2,8 @@ use anyhow::{Result, bail, ensure};
 use cargo_metadata::{MetadataCommand, Package};
 use log::debug;
 use serde::Deserialize;
+#[cfg(windows)]
+use std::fs::remove_file;
 use std::{
     env::var,
     ffi::{OsStr, OsString},
@@ -139,9 +141,14 @@ impl Builder {
 // https://users.rust-lang.org/t/how-can-i-make-build-rs-rerun-every-time-that-cargo-run-or-cargo-build-is-run/51852/5
 fn force_rerun() -> Result<()> {
     let out_dir = var("OUT_DIR")?;
+    // smoelius: "cargo::rerun-if-changed=<path-to-now.txt>" does not seem to work on Windows, but
+    // the following seems to work on both Windows and non-Windows.
+    println!("cargo::rerun-if-changed={out_dir}");
     let path = PathBuf::from(out_dir).join("now.txt");
+    // smoelius: On Windows, remove the file if it already exists.
+    #[cfg(windows)]
+    remove_file(&path).unwrap_or_default();
     write(&path, format!("{:?}\n", Instant::now()))?;
-    println!("cargo::rerun-if-changed={}", path.display());
     Ok(())
 }
 
