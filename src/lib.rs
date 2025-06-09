@@ -6,10 +6,10 @@ use std::{
     env::var,
     ffi::{OsStr, OsString},
     fmt::Debug,
-    fs::write,
+    fs::{OpenOptions, write},
     io::Write,
     path::{Path, PathBuf},
-    time::Instant,
+    time::SystemTime,
 };
 
 mod command;
@@ -135,13 +135,27 @@ impl Builder {
     }
 }
 
+const TIMESTAMP_CONTENTS: &str =
+    "This file has an mtime of when a Nested Workspace build script was started.
+
+https://github.com/smoelius/nested_workspace";
+
 // smoelius: Variant of @juggle-tux's idea here:
 // https://users.rust-lang.org/t/how-can-i-make-build-rs-rerun-every-time-that-cargo-run-or-cargo-build-is-run/51852/5
 fn force_rerun() -> Result<()> {
     let out_dir = var("OUT_DIR")?;
-    let path = PathBuf::from(out_dir).join("now.txt");
-    write(&path, format!("{:?}\n", Instant::now()))?;
-    println!("cargo::rerun-if-changed={}", path.display());
+    let path = PathBuf::from(out_dir).join("nested_workspace.timestamp");
+    println!("cargo::rerun-if-changed={}", path.to_string_lossy());
+    write(&path, TIMESTAMP_CONTENTS)?;
+    // smoelius: Manually set the file's mtime. Simply creating/writing the file doesn't seem to
+    // work on Windows. I'm not sure why.
+    touch(&path)?;
+    Ok(())
+}
+
+fn touch(path: &Path) -> Result<()> {
+    let file = OpenOptions::new().write(true).open(path)?;
+    file.set_modified(SystemTime::now())?;
     Ok(())
 }
 

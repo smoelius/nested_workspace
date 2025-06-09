@@ -1,9 +1,10 @@
+use anyhow::{Result, ensure};
 use assert_cmd::{cargo::CommandCargoExt, output::OutputError};
-use std::{
-    collections::HashMap, env::remove_var, ffi::OsStr, fs::read_to_string, path::Path,
-    process::Command,
-};
+use std::{env::remove_var, ffi::OsStr, path::Path, process::Command};
 use walkdir::WalkDir;
+
+mod util;
+use util::Timestamps;
 
 #[ctor::ctor]
 fn initialize() {
@@ -14,6 +15,7 @@ fn initialize() {
 
 #[test]
 fn build_script_always_runs() {
+    let mut failures = Vec::new();
     for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR"))) {
         let entry = result.unwrap();
         let path = entry.path();
@@ -23,8 +25,11 @@ fn build_script_always_runs() {
         let manifest_path = path.with_file_name("Cargo.toml");
         eprintln!("{}", manifest_path.display());
         fetch(&manifest_path);
-        check_then_build(&manifest_path);
+        if let Err(error) = check_then_build(&manifest_path) {
+            failures.push((manifest_path, error));
+        }
     }
+    assert!(failures.is_empty(), "{failures:#?}");
 }
 
 // smoelius: `fetch` is for the `git_dependency` fixture. Note that we must use `cargo nw fetch` and
@@ -38,13 +43,9 @@ fn fetch(manifest_path: &Path) {
     assert!(status.success());
 }
 
-fn check_then_build(manifest_path: &Path) {
-    let mut path_contents_map = HashMap::<String, String>::new();
+fn check_then_build(manifest_path: &Path) -> Result<()> {
+    let mut timestamps_before = None;
     for build in [false, true] {
-        if build {
-            eprintln!("{path_contents_map:#?}");
-            assert!(!path_contents_map.is_empty());
-        }
         let mut command = Command::new("cargo");
         command.args([
             if build { "build" } else { "check" },
@@ -53,25 +54,24 @@ fn check_then_build(manifest_path: &Path) {
             "--manifest-path",
         ]);
         command.arg(manifest_path);
-        let output = command.output().unwrap();
+        let output = command.output()?;
         if build {
-            assert!(output.status.success());
-        } else if !output.status.success() {
-            eprintln!("command failed: {}", OutputError::new(output));
-            return;
-        }
-        let stdout = String::from_utf8(output.stdout).unwrap();
-        for line in stdout.lines().filter(|line| line.ends_with("/now.txt")) {
-            let index = line.rfind('=').unwrap();
-            let path = &line[index + 1..];
-            let contents_curr = read_to_string(path).unwrap();
-            if build {
-                let contents_prev = path_contents_map.remove(path).unwrap();
-                assert_ne!(*contents_prev, contents_curr);
-            } else {
-                path_contents_map.insert(path.to_owned(), contents_curr);
+            ensure!(output.status.success());
+        } else {
+            if !output.status.success() {
+                eprintln!("command failed: {command:?}: {}", OutputError::new(output));
+                return Ok(());
             }
+            let stdout = String::from_utf8(output.stdout)?;
+            let timestamps = Timestamps::new(&stdout)?;
+            eprintln!("`timestamps` before build: {:#?}", timestamps.get());
+            ensure!(timestamps.get().is_empty() == false);
+            timestamps_before = Some(timestamps);
         }
     }
-    assert!(path_contents_map.is_empty());
+    let timestamps_before = timestamps_before.unwrap();
+    let timestamps_after = timestamps_before.rescan()?;
+    eprintln!("`timestamps` after build: {:#?}", timestamps_after.get());
+    timestamps_before.compare(&timestamps_after)?;
+    Ok(())
 }
