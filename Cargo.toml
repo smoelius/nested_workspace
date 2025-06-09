@@ -45,3 +45,8 @@ missing-panics-doc = "allow"
 exclude = ["fixtures"]
 members = ["example"]
 resolver = "3"
+
+[workspace.metadata.dylint]
+libraries = [
+    { git = "https://github.com/trailofbits/dylint", pattern = "examples/restriction/inconsistent_qualification" },
+]
