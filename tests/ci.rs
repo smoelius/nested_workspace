@@ -10,7 +10,6 @@ use std::{
     str::FromStr,
 };
 use tempfile::tempdir;
-use toml::{Table, Value};
 use walkdir::WalkDir;
 
 #[ctor::ctor]
@@ -50,12 +49,12 @@ fn doctests_are_disabled() {
             continue;
         }
         let contents = read_to_string(path).unwrap();
-        let table = toml::from_str::<Table>(&contents).unwrap();
+        let table = toml::from_str::<toml::Table>(&contents).unwrap();
         let doctest = table
             .get("lib")
-            .and_then(Value::as_table)
+            .and_then(toml::Value::as_table)
             .and_then(|table| table.get("doctest"))
-            .and_then(Value::as_bool);
+            .and_then(toml::Value::as_bool);
         assert_eq!(Some(false), doctest, "failed for `{}`", path.display());
     }
 }
@@ -79,11 +78,11 @@ fn fixtures_are_unpublishable() {
             continue;
         }
         let contents = read_to_string(path).unwrap();
-        let table = toml::from_str::<Table>(&contents).unwrap();
+        let table = toml::from_str::<toml::Table>(&contents).unwrap();
         let Some(package) = table.get("package").and_then(|value| value.as_table()) else {
             continue;
         };
-        let publish = package.get("publish").and_then(Value::as_bool);
+        let publish = package.get("publish").and_then(toml::Value::as_bool);
         assert_eq!(Some(false), publish, "failed for `{}`", path.display());
     }
 }

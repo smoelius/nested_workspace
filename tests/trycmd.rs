@@ -1,11 +1,10 @@
 use anyhow::Result;
 use std::{
-    env::remove_var,
+    env::{remove_var, var},
     ffi::OsStr,
     fs::{OpenOptions, read_dir, read_to_string},
     path::{Path, absolute},
 };
-use toml::Table;
 use trycmd::TestCases;
 
 // smoelius: The following order is intentional.
@@ -87,7 +86,7 @@ fn correctness() {
             }
             let file_stem = path.file_stem().unwrap();
             let contents = read_to_string(&path).unwrap();
-            let table = toml::from_str::<Table>(&contents).unwrap();
+            let table = toml::from_str::<toml::Table>(&contents).unwrap();
 
             let args_actual = table
                 .get("args")
@@ -144,5 +143,5 @@ fn touch(path: &Path) -> Result<()> {
 }
 
 fn enabled(key: &str) -> bool {
-    std::env::var(key).is_ok_and(|value| value != "0")
+    var(key).is_ok_and(|value| value != "0")
 }
