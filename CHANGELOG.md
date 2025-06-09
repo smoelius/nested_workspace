@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Show subcommand in `cargo-nw` error message ([#28](https://github.com/smoelius/nested_workspace/pull/28))
+- Expand documentation regarding use of Git dependencies ([#23](https://github.com/smoelius/nested_workspace/pull/23))
+- FEATURE: Use mtimes to ensure build script is always rerun ([#33](https://github.com/smoelius/nested_workspace/pull/33))
+- FEATURE: Support Windows ([#21](https://github.com/smoelius/nested_workspace/pull/21))
+
 ## 0.3.1
 
 - Correct examples in documentation ([#19](https://github.com/smoelius/nested_workspace/pull/19))
