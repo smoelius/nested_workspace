@@ -51,7 +51,7 @@ Furthermore, the following steps are required:
 
    ```toml
    [build-dependencies]
-   nested_workspace = "0.1"
+   nested_workspace = "*"
    ```
 
    And create a build script (`build.rs`) with the following contents:
@@ -66,7 +66,7 @@ Furthermore, the following steps are required:
 
    ```toml
    [dev-dependencies]
-   nested_workspace = "0.1"
+   nested_workspace = "*"
    ```
 
    And create a test like the following:
