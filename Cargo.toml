@@ -25,7 +25,7 @@ ctor = "0.4"
 regex = "1.11"
 similar-asserts = "1.7"
 tempfile = "3.19"
-toml = "0.8"
+toml = "0.9"
 trycmd = "0.15"
 walkdir = "2.5"
 
