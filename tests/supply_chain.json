@@ -730,6 +730,7 @@
   "not_audited": {
     "foreign_crates": [],
     "local_crates": [
+      "cargo-nested",
       "nested_workspace",
       "nested_workspace_example"
     ]

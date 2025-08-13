@@ -43,7 +43,7 @@ missing-panics-doc = "allow"
 
 [workspace]
 exclude = ["fixtures"]
-members = ["example"]
+members = ["cargo-nested", "example"]
 resolver = "3"
 
 [workspace.metadata.dylint]
