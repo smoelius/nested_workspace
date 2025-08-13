@@ -10,7 +10,7 @@ use trycmd::TestCases;
 // smoelius: The following order is intentional.
 const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
     ("before", &[]),
-    ("nw_clean", &["nw", "clean"]),
+    ("nested_clean", &["nested", "clean"]),
     ("check", &["check", "-vv", "--offline"]),
     ("build", &["build", "-vv", "--offline"]),
     ("test", &["test", "--workspace"]),
@@ -112,8 +112,8 @@ fn correctness() {
                 .and_then(|value| value.as_str())
                 .unwrap();
 
-            if subdir == "nw_clean" {
-                assert_eq!("cargo-nw", bin);
+            if subdir == "nested_clean" {
+                assert_eq!("cargo-nested", bin);
             } else {
                 assert_eq!("cargo", bin);
             }

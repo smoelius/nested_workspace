@@ -32,12 +32,12 @@ fn build_script_always_runs() {
     assert!(failures.is_empty(), "{failures:#?}");
 }
 
-// smoelius: `fetch` is for the `git_dependency` fixture. Note that we must use `cargo nw fetch` and
-// not just `cargo fetch` because the command is run in the containing package's directory.
+// smoelius: `fetch` is for the `git_dependency` fixture. Note that we must use `cargo nested fetch`
+// and not just `cargo fetch` because the command is run in the containing package's directory.
 fn fetch(manifest_path: &Path) {
     let manifest_dir = manifest_path.parent().unwrap();
-    let mut command = Command::cargo_bin("cargo-nw").unwrap();
-    command.args(["nw", "fetch"]);
+    let mut command = Command::cargo_bin("cargo-nested").unwrap();
+    command.args(["nested", "fetch"]);
     command.current_dir(manifest_dir);
     let status = command.status().unwrap();
     assert!(status.success());

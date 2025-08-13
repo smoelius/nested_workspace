@@ -1,7 +1,7 @@
-args = ["nw", "clean"]
+args = ["nested", "clean"]
 
 [bin]
-name = "cargo-nw"
+name = "cargo-nested"
 
 [fs]
 cwd = "../../../fixtures/multiple_test_targets"

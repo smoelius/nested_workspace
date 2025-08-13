@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let (subcommand, args) = parse_args(&args)?;
 
     // smoelius: Run on current package or workspace.
-    let mut command = build_cargo_command(Source::CargoNw, None, &subcommand, args)?;
+    let mut command = build_cargo_command(Source::CargoNested, None, &subcommand, args)?;
     let status = command.status()?;
     ensure!(status.success(), "command failed: {command:?}");
 
@@ -24,8 +24,8 @@ fn main() -> Result<()> {
 
 fn parse_args(args: &[String]) -> Result<(CargoSubcommand, &[String])> {
     let (subcommand, args) = parse_cargo_command(args)?;
-    if !matches!(&subcommand, CargoSubcommand::Other(other) if other == "nw") {
-        bail!("failed to parse `cargo nw` arguments: {subcommand} {args:?}")
+    if !matches!(&subcommand, CargoSubcommand::Other(other) if other == "nested") {
+        bail!("failed to parse `cargo nested` arguments: {subcommand} {args:?}")
     }
     parse_cargo_subcommand(args)
 }
