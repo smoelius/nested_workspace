@@ -1,0 +1,8 @@
+[package]
+name = "cargo-nested"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0"
+nested_workspace = { path = ".." }
