@@ -1,0 +1,7 @@
+args = ["nested", "clean"]
+
+[bin]
+name = "cargo-nested"
+
+[fs]
+cwd = "../../../fixtures/no_roots"

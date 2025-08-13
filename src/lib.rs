@@ -30,7 +30,7 @@ struct Metadata {
 pub enum Source {
     BuildScript,
     Test,
-    CargoNw,
+    CargoNested,
 }
 
 impl std::fmt::Display for Source {
@@ -38,7 +38,7 @@ impl std::fmt::Display for Source {
         match self {
             Source::BuildScript => f.write_str("build script"),
             Source::Test => f.write_str("test"),
-            Source::CargoNw => f.write_str("cargo nw"),
+            Source::CargoNested => f.write_str("cargo nested"),
         }
     }
 }
@@ -167,7 +167,7 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debu
 ) -> Result<()> {
     let roots = all_nested_workspace_roots(dir)?;
     run_cargo_subcommand_on_nested_workspace_roots(
-        Source::CargoNw,
+        Source::CargoNested,
         subcommand,
         args,
         &roots,
@@ -198,9 +198,9 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         debug!("{source}: {:?}", &command);
         let status = command.status()?;
         ensure!(status.success(), "command failed: {command:?}");
-        // smoelius: `cargo nw` is a special case. It must be run manually on each nested
+        // smoelius: `cargo nested` is a special case. It must be run manually on each nested
         // workspace root to ensure that _nested_-nested workspaces are handled.
-        if matches!(source, Source::CargoNw) {
+        if matches!(source, Source::CargoNested) {
             run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, root, true)?;
         }
     }

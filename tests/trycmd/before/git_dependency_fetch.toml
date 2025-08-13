@@ -1,7 +1,7 @@
-args = ["nw", "fetch"]
+args = ["nested", "fetch"]
 
 [bin]
-name = "cargo-nw"
+name = "cargo-nested"
 
 [fs]
 cwd = "../../../fixtures/git_dependency"

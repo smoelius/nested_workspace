@@ -8,21 +8,19 @@ Nested Workspace supports the following Cargo subcommands directly:
 - `cargo check`
 - `cargo test`
 
-Additional Cargo subcommands are supported via the `nw` subcommand, installed with the following command:[^1]
+Additional Cargo subcommands are supported via the `nested` subcommand, installed with the following command:
 
 ```sh
-cargo install nested_workspace
+cargo install cargo-nested
 ```
-
-[^1]: `cargo install cargo-nw` will install a [different subcommand], unrelated to Nested Workspace.
 
 For example, the follow command runs `cargo clean` on the current package or workspace and each nested workspace:
 
 ```sh
-cargo nw clean
+cargo nested clean
 ```
 
-**Note:** `cargo nw build` and `cargo nw test` should also work. However, they may result in extra calls to `cargo build` and `cargo test` (respectively) if direct support for these commands is configured (as describe next).
+**Note:** `cargo nested build` and `cargo nested test` should also work. However, they may result in extra calls to `cargo build` and `cargo test` (respectively) if direct support for these commands is configured (as describe next).
 
 ## Usage
 
@@ -100,7 +98,7 @@ The following modifications are made:
 
 - `--workspace` is added to the arguments so that all packages in a nested workspace are tested, even if a nested workspace contains a root package.
 
-### `cargo nw <subcommand>`
+### `cargo nested <subcommand>`
 
 All arguments are forwarded; no arguments are filtered out or added.
 
@@ -135,10 +133,10 @@ Caused by:
   can't checkout from 'https://github.com/rust-lang/rust-clippy': you are in the offline mode (--offline)
 ```
 
-To avoid such errors, we recommend running `cargo nw fetch` beforehand, e.g.:
+To avoid such errors, we recommend running `cargo nested fetch` beforehand, e.g.:
 
 ```sh
-cargo nw fetch && cargo check --offline
+cargo nested fetch && cargo check --offline
 ```
 
 ## Why would one need multiple workspaces?
@@ -154,12 +152,11 @@ Nested Workspace needs a _trigger_ to run a subcommand:
 - For `cargo build` and `cargo check`, the trigger is a build script containing `nested_workspace::build()`.
 - For `cargo test`, the trigger is a test containing `nested_workspace::test()`.
 
-For other subcommands, there is no obvious trigger. Hence, other subcommands must be run with `cargo nw <subcommand>`.
+For other subcommands, there is no obvious trigger. Hence, other subcommands must be run with `cargo nested <subcommand>`.
 
 [Dylint]: https://github.com/trailofbits/dylint
 [Known problem]: #known-problem-potential-deadlocks
 [`gix-transport`]: https://github.com/GitoxideLabs/gitoxide/blob/8c353ea00c805604113a567d2f5157be94cc9f28/gix-transport/src/client/blocking_io/http/mod.rs#L25-L26
-[different subcommand]: https://github.com/aspectron/cargo-nw
 [example]: ./example
 [feature unification]: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
 [with the same toolchain]: https://github.com/rust-lang/rustup/issues/1399#issuecomment-383376082

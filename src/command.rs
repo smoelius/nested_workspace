@@ -172,7 +172,7 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
         }
         // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
         // accept such an option. `cargo fmt` is an example.
-        (Source::CargoNw, _) => {
+        (Source::CargoNested, _) => {
             let args = args.iter().map(OsString::from).collect();
             (subcommand.as_os_str(), args)
         }
