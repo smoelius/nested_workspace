@@ -47,18 +47,27 @@ mod os_specific {
     pub fn parent_command() -> Result<String> {
         let ppid = parent_id();
         let mut command = Command::new("ps");
-        command.args(["-p", &ppid.to_string(), "-o", "args="]);
+        command.args(["-o", "pid,args"]);
+        // smoelius: `-A` is required to find the parent process on macOS.
+        #[cfg(target_os = "macos")]
+        command.arg("-A");
         let output = command.output()?;
         ensure!(output.status.success(), "command failed: {command:?}");
-        let lines = output.stdout.lines().collect::<io::Result<Vec<_>>>()?;
-        let [line] = &lines[..] else {
-            bail!(
-                "expected one line but found {} in command output: {:?}",
-                lines.len(),
-                command
-            );
-        };
-        Ok(line.clone())
+        // smoelius: Skip the header.
+        let lines = output
+            .stdout
+            .lines()
+            .skip(1)
+            .collect::<io::Result<Vec<_>>>()?;
+        for line in lines {
+            let Some((pid_str, args)) = line.trim_ascii_start().split_once(' ') else {
+                bail!("line does not contain whitespace: {line:?}");
+            };
+            if ppid == pid_str.parse::<u32>()? {
+                return Ok(args.to_owned());
+            }
+        }
+        bail!("failed to find {ppid} args");
     }
 }
 
