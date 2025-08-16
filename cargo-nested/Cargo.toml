@@ -1,8 +1,13 @@
 [package]
 name = "cargo-nested"
-version = "0.1.0"
+version = "0.4.0"
+authors = ["Samuel Moelius <sam@moeli.us>"]
+description = "A Cargo subcommand to run commands on nested workspaces"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/smoelius/nested_workspace"
 
 [dependencies]
-anyhow = "1.0"
-nested_workspace = { path = ".." }
+anyhow = { workspace = true }
+nested_workspace = { workspace = true }
