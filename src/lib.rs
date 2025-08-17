@@ -113,8 +113,8 @@ impl Builder {
                 .any(|&arg| arg == "--frozen" || arg == "--offline")
         {
             println!(
-                "cargo::warning=Refusing to {subcommand} nested workspaces as `--offline` was not passed to parent \
-                 command"
+                "cargo::warning=Refusing to {subcommand} nested workspaces as `--offline` was not \
+                 passed to parent command"
             );
             return Ok(());
         }
