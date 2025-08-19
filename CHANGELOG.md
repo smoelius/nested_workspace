@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+- Improve warning message ([#41](https://github.com/smoelius/nested_workspace/pull/41))
+- BREAKING: Rename `cargo-nw` to `cargo-nested` ([#46](https://github.com/smoelius/nested_workspace/pull/46), [#47](https://github.com/smoelius/nested_workspace/pull/47), and [#50](https://github.com/smoelius/nested_workspace/pull/50))
+- FEATURE: Simplify use of `ps` so that `nested_workspace` works on Alpine Linux ([#49](https://github.com/smoelius/nested_workspace/pull/49))
+
 ## 0.4.0
 
 - Show subcommand in `cargo-nw` error message ([#28](https://github.com/smoelius/nested_workspace/pull/28))
