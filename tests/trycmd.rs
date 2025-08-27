@@ -1,4 +1,5 @@
 use anyhow::Result;
+use regex::Regex;
 use std::{
     env::{remove_var, var},
     ffi::OsStr,
@@ -6,6 +7,7 @@ use std::{
     path::{Path, absolute},
 };
 use trycmd::TestCases;
+use walkdir::WalkDir;
 
 // smoelius: The following order is intentional.
 const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
@@ -130,6 +132,20 @@ fn correctness() {
 
             assert_eq!(file_stem, fixture);
         }
+    }
+}
+
+#[test]
+fn no_decimal_times() {
+    let re = Regex::new(r"\b[0-9]+\.[0-9]+s").unwrap();
+    for result in WalkDir::new("tests/trycmd") {
+        let entry = result.unwrap();
+        let path = entry.path();
+        if path.extension() != Some(OsStr::new("stdout")) {
+            continue;
+        }
+        let contents = read_to_string(path).unwrap();
+        assert!(!re.is_match(&contents), "{} matches", path.display());
     }
 }
 
