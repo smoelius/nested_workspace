@@ -18,6 +18,9 @@ pub use command::{
     CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
 };
 
+mod reentrancy_guard;
+use reentrancy_guard::check_reentrancy_guard;
+
 mod util;
 use util::Delimiter;
 
@@ -88,12 +91,14 @@ impl Builder {
     }
 
     pub fn unwrap(self) {
-        // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's default
-        // behavior is to run the build script for the first command (`cargo check`), but not again
-        // for the second. However, we need to the build script to be rerun so that we can
-        // call `cargo build` for the nested workspaces. `force_rerun` is a hack to achieve
-        // this.
         if matches!(self.source, Source::BuildScript) {
+            check_reentrancy_guard().unwrap();
+
+            // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's
+            // default behavior is to run the build script for the first command (`cargo check`),
+            // but not again for the second. However, we need to the build script to be rerun so
+            // that we can call `cargo build` for the nested workspaces. `force_rerun` is a hack
+            // to achieve this.
             force_rerun().unwrap();
         }
 
