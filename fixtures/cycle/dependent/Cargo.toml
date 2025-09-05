@@ -1,0 +1,14 @@
+[package]
+name = "dependent"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+cycle = { path = ".." }
+
+[lib]
+doctest = false
+
+[workspace]
+resolver = "3"
