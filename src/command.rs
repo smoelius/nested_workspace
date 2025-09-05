@@ -1,4 +1,4 @@
-use super::Source;
+use crate::{Source, reentrancy_guard::reentrancy_guard_from_package_name};
 use anyhow::{Result, bail};
 use std::{
     ffi::{OsStr, OsString},
@@ -192,6 +192,13 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     command.env_remove("CARGO");
     command.env_remove("RUSTC");
     command.env_remove("RUSTUP_TOOLCHAIN");
+    if matches!(source, Source::BuildScript) {
+        let Some(package_name) = package_name else {
+            bail!("failed to get package name");
+        };
+        let reentrancy_guard = reentrancy_guard_from_package_name(package_name);
+        command.env(reentrancy_guard, "1");
+    }
     Ok(command)
 }
 
