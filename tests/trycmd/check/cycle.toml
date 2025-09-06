@@ -1,0 +1,9 @@
+args = ["check", "-vv", "--offline"]
+
+status = "failed"
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../fixtures/cycle"
