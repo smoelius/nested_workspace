@@ -28,25 +28,27 @@ fn clippy() {
 }
 
 #[test]
-fn doctests_are_disabled() {
-    for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR"))) {
-        let entry = result.unwrap();
-        let path = entry.path();
-        if path.file_name() != Some(OsStr::new("Cargo.toml")) {
-            continue;
+fn doctests_are_disabled_for_example_and_fixtures() {
+    for dir in ["example", "fixtures"] {
+        for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)) {
+            let entry = result.unwrap();
+            let path = entry.path();
+            if path.file_name() != Some(OsStr::new("Cargo.toml")) {
+                continue;
+            }
+            let manifest_dir = path.parent().unwrap();
+            if !manifest_dir.join("src/lib.rs").try_exists().unwrap() {
+                continue;
+            }
+            let contents = read_to_string(path).unwrap();
+            let table = toml::from_str::<toml::Table>(&contents).unwrap();
+            let doctest = table
+                .get("lib")
+                .and_then(toml::Value::as_table)
+                .and_then(|table| table.get("doctest"))
+                .and_then(toml::Value::as_bool);
+            assert_eq!(Some(false), doctest, "failed for `{}`", path.display());
         }
-        let manifest_dir = path.parent().unwrap();
-        if !manifest_dir.join("src/lib.rs").try_exists().unwrap() {
-            continue;
-        }
-        let contents = read_to_string(path).unwrap();
-        let table = toml::from_str::<toml::Table>(&contents).unwrap();
-        let doctest = table
-            .get("lib")
-            .and_then(toml::Value::as_table)
-            .and_then(|table| table.get("doctest"))
-            .and_then(toml::Value::as_bool);
-        assert_eq!(Some(false), doctest, "failed for `{}`", path.display());
     }
 }
 

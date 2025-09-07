@@ -32,9 +32,6 @@ walkdir = "2.5"
 __disable_offline_check = []
 __disable_supply_chain_test = []
 
-[lib]
-doctest = false
-
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 allow-attributes = { level = "warn", priority = -1 }
