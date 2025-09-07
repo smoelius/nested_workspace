@@ -1,12 +1,12 @@
 use anyhow::Result;
 use dir_entry_ext::DirEntryExt;
-use regex::Regex;
-use std::{
-    env::{remove_var, var},
-    ffi::OsStr,
-    fs::{OpenOptions, read_dir, read_to_string},
-    path::{Path, absolute},
+use elaborate::std::{
+    env::var_wc,
+    fs::{OpenOptionsContext, read_dir_wc, read_to_string_wc},
+    path::{PathContext, absolute_wc},
 };
+use regex::Regex;
+use std::{env::remove_var, ffi::OsStr, fs::OpenOptions, path::Path};
 use trycmd::TestCases;
 use walkdir::WalkDir;
 
@@ -41,7 +41,7 @@ fn trycmd() {
 #[test]
 fn completeness() {
     let mut missing = Vec::new();
-    for result in read_dir("fixtures").unwrap() {
+    for result in read_dir_wc("fixtures").unwrap() {
         let entry = result.unwrap();
         let filename = entry.file_name();
         for (subdir, _) in SUBDIR_ARGS {
@@ -53,8 +53,8 @@ fn completeness() {
                     .join(subdir)
                     .join(&filename)
                     .with_extension(extension);
-                if !path.try_exists().unwrap() {
-                    let path = absolute(path).unwrap();
+                if !path.try_exists_wc().unwrap() {
+                    let path = absolute_wc(path).unwrap();
                     missing.push(path);
                 }
             }
@@ -80,14 +80,14 @@ fn correctness() {
             continue;
         }
         let path = Path::new("tests/trycmd").join(subdir);
-        for result in read_dir(path).unwrap() {
+        for result in read_dir_wc(path).unwrap() {
             let entry = result.unwrap();
             if entry.extension().as_deref() != Some(OsStr::new("toml")) {
                 continue;
             }
             let path = entry.path();
-            let file_stem = path.file_stem().unwrap();
-            let contents = read_to_string(&path).unwrap();
+            let file_stem = path.file_stem_wc().unwrap();
+            let contents = read_to_string_wc(&path).unwrap();
             let table = toml::from_str::<toml::Table>(&contents).unwrap();
 
             let args_actual = table
@@ -128,8 +128,7 @@ fn correctness() {
                 .map(Path::new)
                 .unwrap();
 
-            #[expect(clippy::disallowed_methods)]
-            let fixture = cwd.file_name().unwrap();
+            let fixture = cwd.file_name_wc().unwrap();
 
             assert_eq!(file_stem, fixture);
         }
@@ -145,7 +144,7 @@ fn no_decimal_times() {
             continue;
         }
         let path = entry.path();
-        let contents = read_to_string(path).unwrap();
+        let contents = read_to_string_wc(path).unwrap();
         assert!(!re.is_match(&contents), "{} matches", path.display());
     }
 }
@@ -154,11 +153,10 @@ fn touch(path: &Path) -> Result<()> {
     OpenOptions::new()
         .create(true)
         .append(true)
-        .open(path)
+        .open_wc(path)
         .map(|_| ())
-        .map_err(Into::into)
 }
 
 fn enabled(key: &str) -> bool {
-    var(key).is_ok_and(|value| value != "0")
+    var_wc(key).is_ok_and(|value| value != "0")
 }

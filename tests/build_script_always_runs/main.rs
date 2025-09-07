@@ -1,12 +1,9 @@
 use anyhow::{Result, ensure};
 use assert_cmd::{assert::OutputAssertExt, output::OutputError};
 use cargo_metadata::MetadataCommand;
+use elaborate::std::{path::PathContext, process::CommandContext};
 use std::{
-    env::remove_var,
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    process::Command,
-    sync::LazyLock,
+    env::remove_var, ffi::OsStr, path::Path, path::PathBuf, process::Command, sync::LazyLock,
 };
 use walkdir::WalkDir;
 
@@ -54,11 +51,11 @@ fn build_script_always_runs() {
 // smoelius: `fetch` is for the `git_dependency` fixture. Note that we must use `cargo nested fetch`
 // and not just `cargo fetch` because the command is run in the containing package's directory.
 fn fetch(manifest_path: &Path) {
-    let manifest_dir = manifest_path.parent().unwrap();
+    let manifest_dir = manifest_path.parent_wc().unwrap();
     let mut command = Command::new(&*CARGO_NESTED);
     command.args(["nested", "fetch"]);
     command.current_dir(manifest_dir);
-    let status = command.status().unwrap();
+    let status = command.status_wc().unwrap();
     assert!(status.success());
 }
 
@@ -73,7 +70,7 @@ fn check_then_build(manifest_path: &Path) -> Result<()> {
             "--manifest-path",
         ]);
         command.arg(manifest_path);
-        let output = command.output()?;
+        let output = command.output_wc()?;
         if build {
             ensure!(output.status.success());
         } else {

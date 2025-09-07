@@ -1,5 +1,6 @@
 use crate::{Source, reentrancy_guard::reentrancy_guard_from_package_name};
 use anyhow::{Result, bail};
+use elaborate::std::{ffi::OsStrContext, path::PathContext};
 use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
@@ -38,6 +39,7 @@ pub use os_specific::parent_command;
 #[cfg(unix)]
 mod os_specific {
     use anyhow::{Result, bail, ensure};
+    use elaborate::std::process::CommandContext;
     use std::os::unix::process::parent_id;
     use std::{
         io::{self, BufRead},
@@ -51,7 +53,7 @@ mod os_specific {
         // smoelius: `-A` is required to find the parent process on macOS.
         #[cfg(target_os = "macos")]
         command.arg("-A");
-        let output = command.output()?;
+        let output = command.output_wc()?;
         ensure!(output.status.success(), "command failed: {command:?}");
         // smoelius: Skip the header.
         let lines = output
@@ -74,6 +76,7 @@ mod os_specific {
 #[cfg(windows)]
 mod os_specific {
     use anyhow::{Context, Result, bail, ensure};
+    use elaborate::std::process::CommandContext;
     use std::{
         process::{Command, id},
         str::FromStr,
@@ -103,7 +106,7 @@ mod os_specific {
             "get",
             property,
         ]);
-        let output = command.output()?;
+        let output = command.output_wc()?;
         ensure!(output.status.success(), "command failed: {command:?}");
         let stdout = String::from_utf8(output.stdout)?;
         let mut lines = wmic_lines(&stdout);
@@ -126,9 +129,9 @@ pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(args: &[T]) -> Result<(Cargo
         || !{
             let arg0 = args[0].as_ref();
             let path = Path::new(&arg0);
-            path.file_stem()
-                .and_then(OsStr::to_str)
-                .is_some_and(|file_stem| file_stem == "cargo" || file_stem.starts_with("cargo-"))
+            path.file_stem_wc()
+                .and_then(OsStr::to_str_wc)
+                .is_ok_and(|file_stem| file_stem == "cargo" || file_stem.starts_with("cargo-"))
         }
     {
         bail!("failed to parse Cargo command: {args:?}")
@@ -144,6 +147,7 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
         bail!("failed to parse Cargo subcommand: {args:?}")
     }
     let arg0 = args[0].as_ref();
+    #[allow(clippy::allow_attributes, clippy::disallowed_methods)]
     let subcommand = match arg0.to_str() {
         Some("build") => CargoSubcommand::Build,
         Some("check") => CargoSubcommand::Check,

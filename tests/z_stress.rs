@@ -4,6 +4,7 @@
 //! If either thread runs without `--offline`, the test is likely to deadlock.
 
 use anyhow::{Result, ensure};
+use elaborate::std::process::CommandContext;
 use std::{process::Command, thread};
 
 const N_ATTEMPTS: usize = 10;
@@ -36,7 +37,7 @@ fn check(nightly: bool) -> Result<()> {
     // smoelius: Commenting out the next line should cause a deadlock.
     command.arg("--offline");
     command.current_dir("example");
-    let status = command.status().unwrap();
+    let status = command.status_wc().unwrap();
     ensure!(status.success());
     Ok(())
 }
