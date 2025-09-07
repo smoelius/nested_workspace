@@ -1,12 +1,16 @@
 use anyhow::{Result, bail, ensure};
 use cargo_metadata::{MetadataCommand, Package};
+use elaborate::std::{
+    env::var_wc,
+    fs::{FileContext, OpenOptionsContext, write_wc},
+    process::CommandContext,
+};
 use log::debug;
 use serde::Deserialize;
 use std::{
-    env::var,
     ffi::{OsStr, OsString},
     fmt::Debug,
-    fs::{OpenOptions, write},
+    fs::OpenOptions,
     io::Write,
     path::{Path, PathBuf},
     time::SystemTime,
@@ -149,10 +153,10 @@ https://github.com/smoelius/nested_workspace";
 // smoelius: Variant of @juggle-tux's idea here:
 // https://users.rust-lang.org/t/how-can-i-make-build-rs-rerun-every-time-that-cargo-run-or-cargo-build-is-run/51852/5
 fn force_rerun() -> Result<()> {
-    let out_dir = var("OUT_DIR")?;
+    let out_dir = var_wc("OUT_DIR")?;
     let path = PathBuf::from(out_dir).join("nested_workspace.timestamp");
     println!("cargo::rerun-if-changed={}", path.to_string_lossy());
-    write(&path, TIMESTAMP_CONTENTS)?;
+    write_wc(&path, TIMESTAMP_CONTENTS)?;
     // smoelius: Manually set the file's mtime. Simply creating/writing the file doesn't seem to
     // work on Windows. I'm not sure why.
     touch(&path)?;
@@ -160,8 +164,8 @@ fn force_rerun() -> Result<()> {
 }
 
 fn touch(path: &Path) -> Result<()> {
-    let file = OpenOptions::new().write(true).open(path)?;
-    file.set_modified(SystemTime::now())?;
+    let file = OpenOptions::new().write(true).open_wc(path)?;
+    file.set_modified_wc(SystemTime::now())?;
     Ok(())
 }
 
@@ -202,13 +206,13 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         }
         return Ok(());
     }
-    let package_name = var("CARGO_PKG_NAME").ok();
+    let package_name = var_wc("CARGO_PKG_NAME").ok();
     for root in roots {
         let _delimiter = Delimiter::new(root);
         let mut command = build_cargo_command(source, package_name.as_deref(), subcommand, args)?;
         command.current_dir(root);
         debug!("{source}: {:?}", &command);
-        let status = command.status()?;
+        let status = command.status_wc()?;
         ensure!(status.success(), "command failed: {command:?}");
         // smoelius: `cargo nested` is a special case. It must be run manually on each nested
         // workspace root to ensure that _nested_-nested workspaces are handled.
@@ -220,7 +224,7 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
 }
 
 fn current_package_nested_workspace_roots() -> Result<Vec<PathBuf>> {
-    let cargo_manifest_path = var("CARGO_MANIFEST_PATH")?;
+    let cargo_manifest_path = var_wc("CARGO_MANIFEST_PATH")?;
     let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
     let Some(package) = cargo_metadata
         .packages

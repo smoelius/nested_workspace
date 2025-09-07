@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use std::env::var;
+use elaborate::std::env::var_wc;
 
 pub fn check_reentrancy_guard() -> Result<()> {
     let reentrancy_guard = reentrancy_guard()?;
@@ -12,9 +12,7 @@ pub fn check_reentrancy_guard() -> Result<()> {
 }
 
 pub fn reentrancy_guard() -> Result<String> {
-    var("CARGO_PKG_NAME")
-        .map(|package_name| reentrancy_guard_from_package_name(&package_name))
-        .map_err(Into::into)
+    var_wc("CARGO_PKG_NAME").map(|package_name| reentrancy_guard_from_package_name(&package_name))
 }
 
 pub fn reentrancy_guard_from_package_name(package_name: &str) -> String {
@@ -22,5 +20,5 @@ pub fn reentrancy_guard_from_package_name(package_name: &str) -> String {
 }
 
 fn enabled(key: &str) -> bool {
-    var(key).is_ok_and(|value| value != "0")
+    var_wc(key).is_ok_and(|value| value != "0")
 }

@@ -1,6 +1,6 @@
 use anstyle::Style;
+use elaborate::std::{env::current_dir_wc, path::PathContext};
 use std::{
-    env::current_dir,
     io::{IsTerminal, Write},
     path::Path,
 };
@@ -44,9 +44,9 @@ trait StripCurrentDir {
 
 impl StripCurrentDir for Path {
     fn strip_current_dir(&self) -> &Self {
-        let Ok(current_dir) = current_dir() else {
+        let Ok(current_dir) = current_dir_wc() else {
             return self;
         };
-        self.strip_prefix(current_dir).unwrap_or(self)
+        self.strip_prefix_wc(current_dir).unwrap_or(self)
     }
 }

@@ -1,4 +1,5 @@
-use anyhow::{Result, anyhow, ensure};
+use anyhow::{Result, ensure};
+use elaborate::std::{fs::MetadataContext, path::PathContext};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -14,9 +15,13 @@ pub struct Value {
 
 impl Value {
     fn new(path: &Path) -> Result<Self> {
-        let parent = path.parent().ok_or_else(|| anyhow!("path has no parent"))?;
-        let parent_mtime = parent.metadata().and_then(|metadata| metadata.modified())?;
-        let mtime = path.metadata().and_then(|metadata| metadata.modified())?;
+        let parent = path.parent_wc()?;
+        let parent_mtime = parent
+            .metadata_wc()
+            .and_then(|metadata| metadata.modified_wc())?;
+        let mtime = path
+            .metadata_wc()
+            .and_then(|metadata| metadata.modified_wc())?;
         Ok(Self {
             parent_mtime,
             mtime,

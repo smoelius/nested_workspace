@@ -1,6 +1,7 @@
 use assert_cmd::assert::OutputAssertExt;
+use elaborate::std::{fs::read_to_string_wc, path::PathContext, process::CommandContext};
 use regex::Regex;
-use std::{env::remove_var, ffi::OsStr, fs::read_to_string, path::Path, process::Command};
+use std::{env::remove_var, ffi::OsStr, path::Path, process::Command};
 use tempfile::tempdir;
 use walkdir::WalkDir;
 
@@ -22,13 +23,13 @@ fn clippy() {
             "--",
             "--deny=warnings",
         ])
-        .status()
+        .status_wc()
         .unwrap();
     assert!(status.success());
 }
 
 #[test]
-fn doctests_are_disabled_for_example_and_fixtures() {
+fn doctests_are_disabled() {
     for dir in ["example", "fixtures"] {
         for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)) {
             let entry = result.unwrap();
@@ -36,11 +37,11 @@ fn doctests_are_disabled_for_example_and_fixtures() {
                 continue;
             }
             let path = entry.path();
-            let manifest_dir = path.parent().unwrap();
-            if !manifest_dir.join("src/lib.rs").try_exists().unwrap() {
+            let manifest_dir = path.parent_wc().unwrap();
+            if !manifest_dir.join("src/lib.rs").try_exists_wc().unwrap() {
                 continue;
             }
-            let contents = read_to_string(path).unwrap();
+            let contents = read_to_string_wc(path).unwrap();
             let table = toml::from_str::<toml::Table>(&contents).unwrap();
             let doctest = table
                 .get("lib")
@@ -63,6 +64,21 @@ fn dylint() {
 }
 
 #[test]
+fn elaborate_disallowed_methods() {
+    Command::new("cargo")
+        .args([
+            "+nightly",
+            "clippy",
+            "--all-targets",
+            "--",
+            "--deny=warnings",
+        ])
+        .env("CLIPPY_CONF_DIR", "assets/elaborate")
+        .assert()
+        .success();
+}
+
+#[test]
 fn fixtures_are_unpublishable() {
     for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures")) {
         let entry = result.unwrap();
@@ -70,7 +86,7 @@ fn fixtures_are_unpublishable() {
             continue;
         }
         let path = entry.path();
-        let contents = read_to_string(path).unwrap();
+        let contents = read_to_string_wc(path).unwrap();
         let table = toml::from_str::<toml::Table>(&contents).unwrap();
         let Some(package) = table.get("package").and_then(|value| value.as_table()) else {
             continue;
@@ -104,7 +120,7 @@ fn markdown_link_check() {
 fn msrv() {
     let status = Command::new("cargo")
         .args(["msrv", "verify"])
-        .status()
+        .status_wc()
         .unwrap();
     assert!(status.success());
 }
@@ -112,7 +128,7 @@ fn msrv() {
 #[test]
 fn readme_reference_links_are_sorted() {
     let re = Regex::new(r"^\[[^^\]]*\]:").unwrap();
-    let readme = read_to_string("README.md").unwrap();
+    let readme = read_to_string_wc("README.md").unwrap();
     let links = readme
         .lines()
         .filter(|line| re.is_match(line))
@@ -130,11 +146,11 @@ fn readme_reference_links_are_sorted() {
 #[test]
 fn supply_chain() {
     use similar_asserts::SimpleDiff;
-    use std::{fs::write, process::ExitStatus, str::FromStr};
+    use std::{process::ExitStatus, str::FromStr};
 
     let mut command = Command::new("cargo");
     command.args(["supply-chain", "update", "--cache-max-age=0s"]);
-    let _: ExitStatus = command.status().unwrap();
+    let _: ExitStatus = command.status_wc().unwrap();
 
     let mut command = Command::new("cargo");
     command.args(["supply-chain", "json", "--no-dev"]);
@@ -148,9 +164,10 @@ fn supply_chain() {
     let path_buf = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/supply_chain.json");
 
     if enabled("BLESS") {
-        write(path_buf, stdout_normalized).unwrap();
+        use elaborate::std::fs::write_wc;
+        write_wc(path_buf, stdout_normalized).unwrap();
     } else {
-        let stdout_expected = read_to_string(&path_buf).unwrap();
+        let stdout_expected = read_to_string_wc(&path_buf).unwrap();
 
         assert!(
             stdout_expected == stdout_normalized,
@@ -186,7 +203,7 @@ fn remove_avatars(value: &mut serde_json::Value) {
 
 #[cfg(all(unix, not(feature = "__disable_supply_chain_test")))]
 fn enabled(key: &str) -> bool {
-    use std::env::var;
+    use elaborate::std::env::var_wc;
 
-    var(key).is_ok_and(|value| value != "0")
+    var_wc(key).is_ok_and(|value| value != "0")
 }
