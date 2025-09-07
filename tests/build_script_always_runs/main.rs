@@ -1,6 +1,13 @@
 use anyhow::{Result, ensure};
-use assert_cmd::{cargo::CommandCargoExt, output::OutputError};
-use std::{env::remove_var, ffi::OsStr, path::Path, process::Command};
+use assert_cmd::{assert::OutputAssertExt, output::OutputError};
+use cargo_metadata::MetadataCommand;
+use std::{
+    env::remove_var,
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    process::Command,
+    sync::LazyLock,
+};
 use walkdir::WalkDir;
 
 mod util;
@@ -12,6 +19,18 @@ fn initialize() {
         remove_var("CARGO_TERM_COLOR");
     }
 }
+
+static CARGO_NESTED: LazyLock<PathBuf> = LazyLock::new(|| {
+    Command::new("cargo")
+        .args(["build", "--package", "cargo-nested"])
+        .assert()
+        .success();
+    let metadata = MetadataCommand::new().no_deps().exec().unwrap();
+    metadata
+        .target_directory
+        .join("debug/cargo-nested")
+        .into_std_path_buf()
+});
 
 #[test]
 fn build_script_always_runs() {
@@ -36,7 +55,7 @@ fn build_script_always_runs() {
 // and not just `cargo fetch` because the command is run in the containing package's directory.
 fn fetch(manifest_path: &Path) {
     let manifest_dir = manifest_path.parent().unwrap();
-    let mut command = Command::cargo_bin("cargo-nested").unwrap();
+    let mut command = Command::new(&*CARGO_NESTED);
     command.args(["nested", "fetch"]);
     command.current_dir(manifest_dir);
     let status = command.status().unwrap();
