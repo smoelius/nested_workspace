@@ -128,6 +128,7 @@ impl Builder {
             self.source,
             &subcommand,
             &args,
+            None,
             &roots,
             false,
         )?;
@@ -170,6 +171,7 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debu
         Source::CargoNested,
         subcommand,
         args,
+        Some(dir),
         &roots,
         is_recursive_call,
     )?;
@@ -180,13 +182,18 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     source: Source,
     subcommand: &CargoSubcommand,
     args: &[T],
+    dir: Option<&Path>,
     roots: &[PathBuf],
     is_recursive_call: bool,
 ) -> Result<()> {
     env_logger::try_init().unwrap_or_default();
     if roots.is_empty() {
         if !is_recursive_call {
-            writeln!(std::io::stderr(), "Warning: found no nested workspaces")?;
+            let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
+            writeln!(
+                std::io::stderr(),
+                "Warning: found no nested workspaces{in_dir}",
+            )?;
         }
         return Ok(());
     }
