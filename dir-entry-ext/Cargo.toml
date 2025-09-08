@@ -1,0 +1,7 @@
+[package]
+name = "dir-entry-ext"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+walkdir = { version = "2.5", optional = true }

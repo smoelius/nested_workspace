@@ -28,6 +28,8 @@ toml = "0.9"
 trycmd = "0.15"
 walkdir = "2.5"
 
+dir-entry-ext = { path = "dir-entry-ext", features = ["walkdir"] }
+
 [features]
 __disable_offline_check = []
 __disable_supply_chain_test = []
@@ -40,7 +42,7 @@ missing-panics-doc = "allow"
 
 [workspace]
 exclude = ["fixtures"]
-members = ["cargo-nested", "example"]
+members = ["cargo-nested", "dir-entry-ext", "example"]
 resolver = "3"
 
 [workspace.dependencies]

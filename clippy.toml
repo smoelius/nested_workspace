@@ -1,0 +1,4 @@
+disallowed-methods = [
+    { path = "std::path::Path::extension", reason = "use `DirEntryExt::extension`" },
+    { path = "std::path::Path::file_name", reason = "use `std::fs::DirEntry::file_name`" },
+]

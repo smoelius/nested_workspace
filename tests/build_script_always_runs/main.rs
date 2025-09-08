@@ -37,10 +37,10 @@ fn build_script_always_runs() {
     let mut failures = Vec::new();
     for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR"))) {
         let entry = result.unwrap();
-        let path = entry.path();
-        if path.file_name() != Some(OsStr::new("build.rs")) {
+        if entry.file_name() != OsStr::new("build.rs") {
             continue;
         }
+        let path = entry.path();
         let manifest_path = path.with_file_name("Cargo.toml");
         eprintln!("{}", manifest_path.display());
         fetch(&manifest_path);
