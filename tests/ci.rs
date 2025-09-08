@@ -32,10 +32,10 @@ fn doctests_are_disabled_for_example_and_fixtures() {
     for dir in ["example", "fixtures"] {
         for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)) {
             let entry = result.unwrap();
-            let path = entry.path();
-            if path.file_name() != Some(OsStr::new("Cargo.toml")) {
+            if entry.file_name() != OsStr::new("Cargo.toml") {
                 continue;
             }
+            let path = entry.path();
             let manifest_dir = path.parent().unwrap();
             if !manifest_dir.join("src/lib.rs").try_exists().unwrap() {
                 continue;
@@ -66,10 +66,10 @@ fn dylint() {
 fn fixtures_are_unpublishable() {
     for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures")) {
         let entry = result.unwrap();
-        let path = entry.path();
-        if path.file_name() != Some(OsStr::new("Cargo.toml")) {
+        if entry.file_name() != OsStr::new("Cargo.toml") {
             continue;
         }
+        let path = entry.path();
         let contents = read_to_string(path).unwrap();
         let table = toml::from_str::<toml::Table>(&contents).unwrap();
         let Some(package) = table.get("package").and_then(|value| value.as_table()) else {

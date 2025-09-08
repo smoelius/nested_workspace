@@ -524,6 +524,14 @@
         "name": "David Tolnay"
       }
     ],
+    "same-file": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
     "semver": [
       {
         "id": 3618,
@@ -626,6 +634,22 @@
         "name": "Christian Duerr"
       }
     ],
+    "walkdir": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
+    "winapi-util": [
+      {
+        "id": 189,
+        "kind": "user",
+        "login": "BurntSushi",
+        "name": "Andrew Gallant"
+      }
+    ],
     "windows-link": [
       {
         "id": 64539,
@@ -719,6 +743,7 @@
     "foreign_crates": [],
     "local_crates": [
       "cargo-nested",
+      "dir-entry-ext",
       "nested_workspace",
       "nested_workspace_example"
     ]
