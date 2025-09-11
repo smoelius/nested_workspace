@@ -84,42 +84,37 @@ mod os_specific {
 
     pub fn parent_command() -> Result<String> {
         let ppid = parent_id()?;
-        wmic::<String>(ppid, "CommandLine")
+        get_cim_instance::<String>(ppid, "CommandLine")
     }
 
     // smoelius: Based on:
     // https://stackoverflow.com/questions/7486717/finding-parent-process-id-on-windows
     fn parent_id() -> Result<u32> {
-        wmic::<u32>(id(), "ParentProcessId")
+        get_cim_instance::<u32>(id(), "ParentProcessId")
     }
 
-    fn wmic<T>(pid: u32, property: &str) -> Result<T>
+    fn get_cim_instance<T>(pid: u32, property: &str) -> Result<T>
     where
         T: FromStr,
         Result<T, <T as FromStr>::Err>: Context<T, <T as FromStr>::Err>,
     {
-        let mut command = Command::new("wmic");
-        command.args([
-            "process",
-            "where",
-            &format!("processid='{pid}'"),
-            "get",
-            property,
-        ]);
+        let mut command = Command::new("powershell");
+        command.arg(format!(
+            r#"(Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = {pid}").{property}"#
+        ));
         let output = command.output_wc()?;
         ensure!(output.status.success(), "command failed: {command:?}");
         let stdout = String::from_utf8(output.stdout)?;
-        let mut lines = wmic_lines(&stdout);
-        let line = match (lines.next(), lines.next()) {
-            (Some(header), Some(line)) if property == header => line,
-            _ => bail!("unexpected output format: {stdout:?}"),
+        let mut lines = get_cim_instance_lines(&stdout);
+        let (Some(line), None) = (lines.next(), lines.next()) else {
+            bail!("unexpected output format: {stdout:?}");
         };
         str::parse::<T>(line)
             .with_context(|| format!("failed to parse line as {property}: {line:?}"))
     }
 
-    fn wmic_lines(output: &str) -> impl Iterator<Item = &str> {
-        output.split("\r\r\n").map(str::trim_end)
+    fn get_cim_instance_lines(output: &str) -> impl Iterator<Item = &str> {
+        output.lines().map(str::trim_end)
     }
 }
 
