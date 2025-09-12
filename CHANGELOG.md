@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Add path to "Found no nested workspaces" message ([801ca96](https://github.com/smoelius/nested_workspace/commit/801ca9607a517da390d3a81e34fbbf624b21fe0c))
+- FEATURE: Emit error message when a cycle is detected among nested workspaces ([#61](https://github.com/smoelius/nested_workspace/pull/61))
+- FEATURE: Use `elaborate` for better error reporting ([#67](https://github.com/smoelius/nested_workspace/pull/67))
+- Use PowerShell and `Get-CimInstance` rather than `wmic` to get parent process on Windows ([#69](https://github.com/smoelius/nested_workspace/pull/69))
+
 ## 0.5.0
 
 - Improve warning message ([#41](https://github.com/smoelius/nested_workspace/pull/41))
