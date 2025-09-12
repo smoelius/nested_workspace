@@ -5,6 +5,7 @@ use elaborate::std::{
     fs::{FileContext, OpenOptionsContext, write_wc},
     process::CommandContext,
 };
+use glob::glob;
 use log::debug;
 use serde::Deserialize;
 use std::{
@@ -266,10 +267,12 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
     };
     let nested_workspace_metadata =
         serde_json::from_value::<Metadata>(nested_workspace_value.clone())?;
-    let roots = nested_workspace_metadata
-        .roots
-        .into_iter()
-        .map(|path| Path::new(&cargo_manifest_dir).join(path))
-        .collect();
+    let mut roots = Vec::new();
+    for pattern in nested_workspace_metadata.roots {
+        for result in glob(&format!("{cargo_manifest_dir}/{pattern}"))? {
+            let path = result?;
+            roots.push(path);
+        }
+    }
     Ok(Some(roots))
 }
