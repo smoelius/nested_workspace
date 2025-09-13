@@ -476,6 +476,7 @@ dependencies = [
  "dir-entry-ext",
  "elaborate",
  "env_logger",
+ "glob",
  "log",
  "regex",
  "serde",
