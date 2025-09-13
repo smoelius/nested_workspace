@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+
+- FEATURE: Allow nested workspace roots to be named with `glob` patterns ([#70](https://github.com/smoelius/nested_workspace/pull/70))
+
 ## 0.6.0
 
 - Add path to "Found no nested workspaces" message ([801ca96](https://github.com/smoelius/nested_workspace/commit/801ca9607a517da390d3a81e34fbbf624b21fe0c))
