@@ -1,0 +1,7 @@
+args = ["build", "-vv", "--offline"]
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../fixtures/runner"

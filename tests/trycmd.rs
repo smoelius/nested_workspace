@@ -1,12 +1,19 @@
 use anyhow::Result;
 use dir_entry_ext::DirEntryExt;
 use elaborate::std::{
-    env::var_wc,
+    env::{join_paths_wc, var_os_wc, var_wc},
     fs::{OpenOptionsContext, read_dir_wc, read_to_string_wc},
     path::{PathContext, absolute_wc},
+    process::CommandContext,
 };
 use regex::Regex;
-use std::{env::remove_var, ffi::OsStr, fs::OpenOptions, path::Path};
+use std::{
+    env::{remove_var, split_paths},
+    ffi::{OsStr, OsString},
+    fs::OpenOptions,
+    path::{Path, PathBuf},
+    process::Command,
+};
 use trycmd::TestCases;
 use walkdir::WalkDir;
 
@@ -29,13 +36,35 @@ fn initialize() {
 
 #[test]
 fn trycmd() {
+    build_runner();
+
+    let paths = prepend_to_paths(Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug"))
+        .into_string()
+        .unwrap();
+
     for (subdir, _) in SUBDIR_ARGS {
         let test_cases = TestCases::new();
+
+        test_cases.env("PATH", &paths);
 
         test_cases.register_bin("cargo", Path::new(env!("CARGO")));
 
         test_cases.case(format!("tests/trycmd/{subdir}/*.toml"));
     }
+}
+
+fn build_runner() {
+    let mut command = Command::new("cargo");
+    command.args(["build", "--package", "runner"]);
+    let status = command.status_wc().unwrap();
+    assert!(status.success());
+}
+
+fn prepend_to_paths(path: PathBuf) -> OsString {
+    let paths = var_os_wc("PATH").unwrap();
+    let paths_split = split_paths(&paths);
+    let paths_prepended = std::iter::once(path).chain(paths_split);
+    join_paths_wc(paths_prepended).unwrap()
 }
 
 #[test]
