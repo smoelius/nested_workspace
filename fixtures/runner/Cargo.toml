@@ -1,0 +1,17 @@
+[package]
+name = "runner"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[build-dependencies]
+nested_workspace = { path = "../.." }
+
+[dev-dependencies]
+nested_workspace = { path = "../.." }
+
+[lib]
+doctest = false
+
+[package.metadata.nested_workspace]
+roots = ["package"]
