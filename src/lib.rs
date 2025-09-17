@@ -18,7 +18,7 @@ use std::{
 };
 
 mod command;
-use command::parent_command;
+use command::parent_cargo_command;
 pub use command::{
     CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
 };
@@ -112,15 +112,13 @@ impl Builder {
     }
 
     fn run_parent_cargo_command_on_current_package_nested_workspace_roots(self) -> Result<()> {
-        let command = parent_command()?;
-        let args = command.split_ascii_whitespace().collect::<Vec<_>>();
-        let (subcommand, subcommand_args) = parse_cargo_command(&args)?;
+        let (subcommand, subcommand_args) = parent_cargo_command()?;
 
         #[cfg(not(feature = "__disable_offline_check"))]
         if matches!(subcommand, CargoSubcommand::Build | CargoSubcommand::Check)
             && !subcommand_args
                 .iter()
-                .any(|&arg| arg == "--frozen" || arg == "--offline")
+                .any(|arg| arg == "--frozen" || arg == "--offline")
         {
             println!(
                 "cargo::warning=Refusing to {subcommand} nested workspaces as `--offline` was not \
