@@ -41,7 +41,7 @@ workspace = true
 
 [workspace]
 exclude = ["fixtures"]
-members = ["cargo-nested", "dir-entry-ext", "example"]
+members = ["cargo-nested", "dir-entry-ext", "example", "runner"]
 resolver = "3"
 
 [workspace.dependencies]

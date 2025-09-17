@@ -787,7 +787,8 @@
       "cargo-nested",
       "dir-entry-ext",
       "nested_workspace",
-      "nested_workspace_example"
+      "nested_workspace_example",
+      "runner"
     ]
   }
 }
