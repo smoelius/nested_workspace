@@ -1,0 +1,7 @@
+args = ["test", "--workspace"]
+
+[bin]
+name = "cargo"
+
+[fs]
+cwd = "../../../fixtures/runner"
