@@ -23,7 +23,9 @@ fn main() -> Result<()> {
 }
 
 fn parse_args(args: &[String]) -> Result<(CargoSubcommand, &[String])> {
-    let (subcommand, args) = parse_cargo_command(args)?;
+    let Some((subcommand, args)) = parse_cargo_command(args)? else {
+        bail!("failed to parse `cargo nested` arguments: {args:?}")
+    };
     if !matches!(&subcommand, CargoSubcommand::Other(other) if other == "nested") {
         bail!("failed to parse `cargo nested` arguments: {subcommand} {args:?}")
     }

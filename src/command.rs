@@ -5,7 +5,7 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
     path::Path,
-    process::Command,
+    process::{Command, id},
 };
 
 pub enum CargoSubcommand {
@@ -34,22 +34,50 @@ impl std::fmt::Display for CargoSubcommand {
     }
 }
 
-pub use os_specific::parent_command;
+pub fn parent_cargo_command() -> Result<(CargoSubcommand, Vec<String>)> {
+    let mut id = id();
+    loop {
+        let (parent_id, command) = os_specific::parent_command(id)?;
+        let args = command.split_ascii_whitespace().collect::<Vec<_>>();
+        match parse_cargo_command(&args)? {
+            Some((subcommand, args)) => {
+                return Ok((subcommand, args.iter().map(|&s| s.to_owned()).collect()));
+            }
+            None => {
+                id = parent_id;
+            }
+        }
+    }
+}
 
 #[cfg(unix)]
 mod os_specific {
-    use anyhow::{Result, bail, ensure};
+    use anyhow::{Context, Result, bail, ensure};
     use elaborate::std::process::CommandContext;
-    use std::os::unix::process::parent_id;
     use std::{
         io::{self, BufRead},
         process::Command,
+        str::FromStr,
     };
 
-    pub fn parent_command() -> Result<String> {
-        let ppid = parent_id();
+    pub fn parent_command(id: u32) -> Result<(u32, String)> {
+        let parent_id = parent_id(id)?;
+        ps::<String>(parent_id, "args").map(|args| (parent_id, args))
+    }
+
+    // smoelius: Based on:
+    // https://stackoverflow.com/questions/7486717/finding-parent-process-id-on-windows
+    fn parent_id(id: u32) -> Result<u32> {
+        ps::<u32>(id, "ppid")
+    }
+
+    pub fn ps<T>(id: u32, property: &str) -> Result<T>
+    where
+        T: FromStr,
+        Result<T, <T as FromStr>::Err>: Context<T, <T as FromStr>::Err>,
+    {
         let mut command = Command::new("ps");
-        command.args(["-o", "pid,args"]);
+        command.args(["-o", &format!("pid,{property}")]);
         // smoelius: `-A` is required to find the parent process on macOS.
         #[cfg(target_os = "macos")]
         command.arg("-A");
@@ -62,14 +90,17 @@ mod os_specific {
             .skip(1)
             .collect::<io::Result<Vec<_>>>()?;
         for line in lines {
-            let Some((pid_str, args)) = line.trim_ascii_start().split_once(' ') else {
+            let Some((pid_str, rest)) = line.trim_ascii_start().split_once(' ') else {
                 bail!("line does not contain whitespace: {line:?}");
             };
-            if ppid == pid_str.parse::<u32>()? {
-                return Ok(args.to_owned());
+            if id == pid_str.parse::<u32>()? {
+                return rest
+                    .trim_ascii_start()
+                    .parse::<T>()
+                    .with_context(|| format!("failed to parse line as {property}: {rest:?}"));
             }
         }
-        bail!("failed to find {ppid} args");
+        bail!("failed to find {id} args");
     }
 }
 
@@ -82,25 +113,25 @@ mod os_specific {
         str::FromStr,
     };
 
-    pub fn parent_command() -> Result<String> {
-        let ppid = parent_id()?;
-        get_cim_instance::<String>(ppid, "CommandLine")
+    pub fn parent_command(id: u32) -> Result<String> {
+        let parent_id = parent_id(id)?;
+        get_cim_instance::<String>(parent_id, "CommandLine").map(|args| (parent_id, args))
     }
 
     // smoelius: Based on:
     // https://stackoverflow.com/questions/7486717/finding-parent-process-id-on-windows
-    fn parent_id() -> Result<u32> {
-        get_cim_instance::<u32>(id(), "ParentProcessId")
+    fn parent_id(id: u32) -> Result<u32> {
+        get_cim_instance::<u32>(id, "ParentProcessId")
     }
 
-    fn get_cim_instance<T>(pid: u32, property: &str) -> Result<T>
+    fn get_cim_instance<T>(id: u32, property: &str) -> Result<T>
     where
         T: FromStr,
         Result<T, <T as FromStr>::Err>: Context<T, <T as FromStr>::Err>,
     {
         let mut command = Command::new("powershell");
         command.arg(format!(
-            r#"(Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = {pid}").{property}"#
+            r#"(Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = {id}").{property}"#
         ));
         let output = command.output_wc()?;
         ensure!(output.status.success(), "command failed: {command:?}");
@@ -109,7 +140,7 @@ mod os_specific {
         let (Some(line), None) = (lines.next(), lines.next()) else {
             bail!("unexpected output format: {stdout:?}");
         };
-        str::parse::<T>(line)
+        line.parse::<T>()
             .with_context(|| format!("failed to parse line as {property}: {line:?}"))
     }
 
@@ -119,7 +150,9 @@ mod os_specific {
 }
 
 #[expect(clippy::similar_names)]
-pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(args: &[T]) -> Result<(CargoSubcommand, &[T])> {
+pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
+    args: &[T],
+) -> Result<Option<(CargoSubcommand, &[T])>> {
     if args.is_empty()
         || !{
             let arg0 = args[0].as_ref();
@@ -129,9 +162,9 @@ pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(args: &[T]) -> Result<(Cargo
                 .is_ok_and(|file_stem| file_stem == "cargo" || file_stem.starts_with("cargo-"))
         }
     {
-        bail!("failed to parse Cargo command: {args:?}")
+        return Ok(None);
     }
-    parse_cargo_subcommand(&args[1..])
+    parse_cargo_subcommand(&args[1..]).map(Some)
 }
 
 #[expect(clippy::similar_names)]
