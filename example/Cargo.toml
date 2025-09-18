@@ -13,5 +13,8 @@ nested_workspace = { path = ".." }
 [lib]
 doctest = false
 
+[lints]
+workspace = true
+
 [package.metadata.nested_workspace]
 roots = ["nested_workspace_*"]

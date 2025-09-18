@@ -11,3 +11,6 @@ repository = "https://github.com/smoelius/nested_workspace"
 [dependencies]
 anyhow = { workspace = true }
 nested_workspace = { workspace = true }
+
+[lints]
+workspace = true
