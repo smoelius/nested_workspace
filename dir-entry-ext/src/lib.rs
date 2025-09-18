@@ -7,14 +7,14 @@ pub trait DirEntryExt {
     type Output<'a>
     where
         Self: 'a;
-    fn extension<'a>(&'a self) -> Option<Self::Output<'a>>;
+    fn extension(&self) -> Option<Self::Output<'_>>;
 }
 
 macro_rules! impl_dir_entry_ext {
     ($ty:ty, $output:ty) => {
         impl DirEntryExt for $ty {
             type Output<'a> = $output;
-            fn extension<'a>(&'a self) -> Option<Self::Output<'a>> {
+            fn extension(&self) -> Option<Self::Output<'_>> {
                 let file_name = self.file_name();
                 let (before, after) = rsplit_file_at_dot(&file_name);
                 before.and(after).map(Into::into)
