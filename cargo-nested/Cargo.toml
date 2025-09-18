@@ -1,6 +1,6 @@
 [package]
 name = "cargo-nested"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Samuel Moelius <sam@moeli.us>"]
 description = "A Cargo subcommand to run commands on nested workspaces"
 edition = "2024"
