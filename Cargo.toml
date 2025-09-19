@@ -1,6 +1,6 @@
 [package]
 name = "nested_workspace"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Samuel Moelius <sam@moeli.us>"]
 description = "Run Cargo commands on workspaces in workspaces"
 edition = "2024"
@@ -47,7 +47,7 @@ resolver = "3"
 
 [workspace.dependencies]
 anyhow = "1.0"
-nested_workspace = { version = "0.7.1", path = "." }
+nested_workspace = { version = "0.7.2", path = "." }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
