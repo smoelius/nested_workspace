@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.7.2
+
+- Parse shell commands with `shlex` ([#82](https://github.com/smoelius/nested_workspace/pull/82))
+
 ## 0.7.1
 
-- Walk parent commands to find the Cargo command so that [runners](https://doc.rust-lang.org/cargo/reference/config.html#targettriplerunner) are supported. ([#78](https://github.com/smoelius/nested_workspace/pull/78))
+- Walk parent commands to find the Cargo command so that [runners](https://doc.rust-lang.org/cargo/reference/config.html#targettriplerunner) are supported ([#78](https://github.com/smoelius/nested_workspace/pull/78))
 
 ## 0.7.0
 
