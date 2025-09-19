@@ -481,6 +481,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "shlex",
  "similar-asserts",
  "tempfile",
  "toml",
