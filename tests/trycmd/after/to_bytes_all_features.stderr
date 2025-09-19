@@ -9,7 +9,7 @@ error: Features `big-endian` and `little-endian` cannot be enabled simultaneousl
 error[E0119]: conflicting implementations of trait `ToBytes` for type `i32`
   --> src/lib.rs:16:1
    |
-9  | impl ToBytes for i32 {
+ 9 | impl ToBytes for i32 {
    | -------------------- first implementation here
 ...
 16 | impl ToBytes for i32 {
