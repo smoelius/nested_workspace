@@ -624,6 +624,20 @@
         "name": "publish"
       }
     ],
+    "shlex": [
+      {
+        "id": 972,
+        "kind": "user",
+        "login": "comex",
+        "name": null
+      },
+      {
+        "id": 1214,
+        "kind": "user",
+        "login": "fenhl",
+        "name": "Fenhl"
+      }
+    ],
     "syn": [
       {
         "id": 3618,

@@ -38,10 +38,10 @@ pub fn parent_cargo_command() -> Result<(CargoSubcommand, Vec<String>)> {
     let mut id = id();
     loop {
         let (parent_id, command) = os_specific::parent_command(id)?;
-        let args = command.split_ascii_whitespace().collect::<Vec<_>>();
+        let args = parse_command(&command);
         match parse_cargo_command(&args)? {
             Some((subcommand, args)) => {
-                return Ok((subcommand, args.iter().map(|&s| s.to_owned()).collect()));
+                return Ok((subcommand, args.to_vec()));
             }
             None => {
                 id = parent_id;
@@ -142,6 +142,10 @@ mod os_specific {
     fn get_cim_instance_lines(output: &str) -> impl Iterator<Item = &str> {
         output.lines().map(str::trim_end)
     }
+}
+
+fn parse_command(command: &str) -> Vec<String> {
+    shlex::split(command).unwrap_or_default()
 }
 
 #[expect(clippy::similar_names)]
@@ -259,4 +263,23 @@ fn filter_package_and_workspace<T: AsRef<OsStr> + Debug>(
         args_out.push(arg_as_ref.to_owned());
     }
     args_out
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn parse_command() {
+        const COMMAND: &str =
+            r#"cargo build --config "target.'cfg(all())'.runner = 'group-runner'""#;
+        let parsed = super::parse_command(COMMAND);
+        assert_eq!(
+            [
+                "cargo",
+                "build",
+                "--config",
+                r"target.'cfg(all())'.runner = 'group-runner'"
+            ],
+            *parsed.iter().map(String::as_str).collect::<Vec<_>>()
+        );
+    }
 }
