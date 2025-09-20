@@ -270,12 +270,12 @@ mod test {
     #[test]
     fn parse_command() {
         const COMMAND: &str =
-            r#"cargo build --config "target.'cfg(all())'.runner = 'group-runner'""#;
+            r#"cargo test --config "target.'cfg(all())'.runner = 'group-runner'""#;
         let parsed = super::parse_command(COMMAND);
         assert_eq!(
             [
                 "cargo",
-                "build",
+                "test",
                 "--config",
                 r"target.'cfg(all())'.runner = 'group-runner'"
             ],
