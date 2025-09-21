@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3
+
+- Use `sysinfo` to get parent process arguments ([#86](https://github.com/smoelius/nested_workspace/pull/86))
+
 ## 0.7.2
 
 - Parse shell commands with `shlex` ([#82](https://github.com/smoelius/nested_workspace/pull/82))
