@@ -1,4 +1,9 @@
-args = ["test", "--workspace"]
+args = [
+    "test",
+    "--workspace",
+    "--config",
+    "target.'cfg(all())'.runner = 'runner'",
+]
 
 [bin]
 name = "cargo"

@@ -1,4 +1,4 @@
-args = ["nested", "clean"]
+args = ["nested", "clean", "--config", "target.'cfg(all())'.runner = 'runner'"]
 
 [bin]
 name = "cargo-nested"

@@ -6,7 +6,9 @@ use std::{
     fmt::Debug,
     path::Path,
     process::{Command, id},
+    sync::LazyLock,
 };
+use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System, UpdateKind};
 
 pub enum CargoSubcommand {
     Build,
@@ -34,14 +36,20 @@ impl std::fmt::Display for CargoSubcommand {
     }
 }
 
-pub fn parent_cargo_command() -> Result<(CargoSubcommand, Vec<String>)> {
+static SYSTEM: LazyLock<System> = LazyLock::new(|| {
+    System::new_with_specifics(
+        RefreshKind::nothing()
+            .with_processes(ProcessRefreshKind::nothing().with_cmd(UpdateKind::Always)),
+    )
+});
+
+pub fn parent_cargo_command() -> Result<(CargoSubcommand, &'static [OsString])> {
     let mut id = id();
     loop {
-        let (parent_id, command) = os_specific::parent_command(id)?;
-        let args = parse_command(&command);
-        match parse_cargo_command(&args)? {
+        let (parent_id, command) = parent_command(id)?;
+        match parse_cargo_command(command)? {
             Some((subcommand, args)) => {
-                return Ok((subcommand, args.to_vec()));
+                return Ok((subcommand, args));
             }
             None => {
                 id = parent_id;
@@ -50,8 +58,18 @@ pub fn parent_cargo_command() -> Result<(CargoSubcommand, Vec<String>)> {
     }
 }
 
-fn parse_command(command: &str) -> Vec<String> {
-    shlex::split(command).unwrap_or_default()
+fn parent_command(id: u32) -> Result<(u32, &'static [OsString])> {
+    let Some(process) = SYSTEM.process(Pid::from_u32(id)) else {
+        bail!("failed to get process with id {id}");
+    };
+    let Some(parent_id) = process.parent() else {
+        bail!("failed to get {id}'s parent process id");
+    };
+    let Some(parent_process) = SYSTEM.process(parent_id) else {
+        bail!("failed to get process with id {parent_id}");
+    };
+    let cmd = parent_process.cmd();
+    Ok((parent_id.as_u32(), cmd))
 }
 
 #[expect(clippy::similar_names)]
@@ -169,23 +187,4 @@ fn filter_package_and_workspace<T: AsRef<OsStr> + Debug>(
         args_out.push(arg_as_ref.to_owned());
     }
     args_out
-}
-
-#[cfg(test)]
-mod test {
-    #[test]
-    fn parse_command() {
-        const COMMAND: &str =
-            r#"cargo test --config "target.'cfg(all())'.runner = 'group-runner'""#;
-        let parsed = super::parse_command(COMMAND);
-        assert_eq!(
-            [
-                "cargo",
-                "test",
-                "--config",
-                r"target.'cfg(all())'.runner = 'group-runner'"
-            ],
-            *parsed.iter().map(String::as_str).collect::<Vec<_>>()
-        );
-    }
 }

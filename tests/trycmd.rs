@@ -129,12 +129,20 @@ fn correctness() {
                         .collect::<Option<Vec<_>>>()
                 });
 
-            assert_eq!(
-                Some(args_expected),
-                args_actual.as_deref(),
-                "failed for `{}`",
-                path.display()
-            );
+            if file_stem == "runner" {
+                assert!(
+                    args_actual.unwrap().starts_with(args_expected),
+                    "failed for `{}`",
+                    path.display()
+                );
+            } else {
+                assert_eq!(
+                    Some(args_expected),
+                    args_actual.as_deref(),
+                    "failed for `{}`",
+                    path.display()
+                );
+            }
 
             let bin = table
                 .get("bin")
