@@ -1,4 +1,10 @@
-args = ["check", "-vv", "--offline"]
+args = [
+    "check",
+    "-vv",
+    "--offline",
+    "--config",
+    "target.'cfg(all())'.runner = 'runner'",
+]
 
 [bin]
 name = "cargo"
