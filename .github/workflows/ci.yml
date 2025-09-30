@@ -47,8 +47,12 @@ jobs:
             target/dylint/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Update/install beta toolchain
-        run: rustup toolchain update beta --profile minimal
+      - name: Update and install toolchains
+        run: |
+          rustup toolchain update beta --profile minimal
+          rustup install stable
+          rustup default stable
+          rustc -vV
 
       - name: Install tools
         run: |
