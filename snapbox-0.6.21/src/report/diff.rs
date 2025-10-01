@@ -224,6 +224,7 @@ fn write_change(
     expected_line_offset: usize,
     actual_line_offset: usize,
 ) -> Result<(), std::fmt::Error> {
+    use std::io::Write;
     if let Some(index) = change.old_index() {
         write!(
             writer,
@@ -243,6 +244,14 @@ fn write_change(
         write!(writer, "{:>4} ", " ",)?;
     }
     write!(writer, "{} ", Styled::new(sign, style))?;
+    writeln!(
+        std::io::stderr(),
+        "{}:{}: change.values().len() = |{:>4}|",
+        file!(),
+        line!(),
+        change.values().len()
+    )
+    .unwrap();
     for &(emphasized, change) in change.values() {
         let cur_style = if emphasized { em_style } else { style };
         write!(writer, "{}", Styled::new(change, cur_style))?;
