@@ -41,7 +41,7 @@ __disable_supply_chain_test = []
 workspace = true
 
 [workspace]
-exclude = ["fixtures"]
+exclude = ["fixtures", "snapbox"]
 members = ["cargo-nested", "dir-entry-ext", "example", "runner"]
 resolver = "3"
 
@@ -59,3 +59,6 @@ missing-panics-doc = "allow"
 libraries = [
     { git = "https://github.com/trailofbits/dylint", pattern = "examples/restriction/inconsistent_qualification" },
 ]
+
+[patch.crates-io]
+snapbox = { path = "snapbox-0.6.21" }
