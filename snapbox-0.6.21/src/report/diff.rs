@@ -82,7 +82,7 @@ fn write_diff_inner(
     expected_line_offset: usize,
     actual_line_offset: usize,
 ) -> Result<(), std::fmt::Error> {
-    let timeout = std::time::Duration::from_millis(500);
+    let timeout = std::time::Duration::from_millis(50000);
     let min_elide = 20;
     let context = 5;
 
