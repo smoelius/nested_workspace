@@ -47,6 +47,14 @@ jobs:
             target/dylint/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Test
+        run: |
+          rustc -vV
+          find . -name target -exec rm -rf {} \;
+          cargo build --workspace --all-targets
+          cd fixtures/conflicting_features
+          cargo test --offline --all-features
+
       - name: Update/install beta toolchain
         run: rustup toolchain update beta --profile minimal
 
