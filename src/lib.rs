@@ -269,8 +269,22 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
     for pattern in nested_workspace_metadata.roots {
         for result in glob(&format!("{cargo_manifest_dir}/{pattern}"))? {
             let path = result?;
+            if !validate_root(&path)? {
+                writeln!(
+                    std::io::stderr(),
+                    "Warning: skipping `{}` as it does not contain a workspace",
+                    path.display(),
+                )?;
+                continue;
+            }
             roots.push(path);
         }
     }
     Ok(Some(roots))
+}
+
+/// Run `cargo metadata` in `root` and verify there is a workspace rooted there.
+fn validate_root(root: &Path) -> Result<bool> {
+    let cargo_metadata = MetadataCommand::new().current_dir(root).no_deps().exec()?;
+    Ok(root == cargo_metadata.workspace_root)
 }
