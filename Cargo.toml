@@ -12,7 +12,7 @@ rust-version = "1.89"
 [dependencies]
 anstyle = "1.0"
 anyhow = { workspace = true }
-cargo_metadata = "0.19"
+cargo_metadata = "0.23"
 elaborate = "0.1"
 env_logger = "0.11"
 glob = "0.3"
