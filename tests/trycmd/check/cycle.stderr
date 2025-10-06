@@ -4,7 +4,7 @@ error: failed to run custom build command for `cycle v0.1.0 ([CWD])`
 Caused by:
   process didn't exit successfully: `[..] [CWD]/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
   --- stdout
-  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/nested_workspace.timestamp
+  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/[PUT].timestamp
 ...
 
   --- stderr
@@ -13,7 +13,7 @@ Caused by:
      Compiling cycle v0.1.0 ([CWD])
 ...
   [cycle 0.1.0] 
-  [cycle 0.1.0] thread 'main' panicked at [..]/nested_workspace/src/lib.rs:[..]:[..]:
+  [cycle 0.1.0] thread 'main' panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:
   [cycle 0.1.0] called `Result::unwrap()` on an `Err` value: cycle detected: cannot run on nested workspaces
   [cycle 0.1.0] note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
   error: failed to run custom build command for `cycle v0.1.0 ([CWD])`
@@ -22,11 +22,11 @@ Caused by:
     process didn't exit successfully: `[..] [CWD]/dependent/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
     --- stderr
 
-    thread 'main' panicked at [..]/nested_workspace/src/lib.rs:[..]:[..]:
+    thread 'main' panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:
     called `Result::unwrap()` on an `Err` value: cycle detected: cannot run on nested workspaces
     note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
   >>> [CWD]/dependent
 
-  thread 'main' panicked at [..]/nested_workspace/src/lib.rs:[..]:[..]:
+  thread 'main' panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:
   called `Result::unwrap()` on an `Err` value: command failed:[..] "cargo" "check" "-vv" "--offline" "--workspace"
   note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

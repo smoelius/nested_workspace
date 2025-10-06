@@ -45,6 +45,8 @@ fn trycmd() {
     for (subdir, _) in SUBDIR_ARGS {
         let test_cases = TestCases::new();
 
+        test_cases.insert_var("[PUT]", "nested_workspace").unwrap();
+
         test_cases.env("PATH", &paths);
 
         test_cases.register_bin("cargo", Path::new(env!("CARGO")));
