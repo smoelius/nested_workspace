@@ -122,7 +122,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-nested"
-version = "0.7.3"
+version = "0.7.4"
 dependencies = [
  "anyhow",
  "nested_workspace",
@@ -466,7 +466,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "nested_workspace"
-version = "0.7.3"
+version = "0.7.4"
 dependencies = [
  "anstyle",
  "anyhow",
