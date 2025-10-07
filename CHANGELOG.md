@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4
+
+- Verify the each nested workspace root contains a workspace at the named location ([#98](https://github.com/smoelius/nested_workspace/pull/98))
+
 ## 0.7.3
 
 - Use `sysinfo` to get parent process arguments ([#86](https://github.com/smoelius/nested_workspace/pull/86))
