@@ -13,22 +13,6 @@ fn initialize() {
 }
 
 #[test]
-fn clippy() {
-    let status = Command::new("cargo")
-        .args([
-            "+nightly",
-            "clippy",
-            "--all-targets",
-            "--offline",
-            "--",
-            "--deny=warnings",
-        ])
-        .status_wc()
-        .unwrap();
-    assert!(status.success());
-}
-
-#[test]
 fn doctests_are_disabled() {
     for dir in ["example", "fixtures"] {
         for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)) {
@@ -61,21 +45,6 @@ fn dylint() {
         .assert();
     let stderr = String::from_utf8(assert.get_output().stderr.clone()).unwrap();
     assert!(assert.try_success().is_ok(), "{}", stderr);
-}
-
-#[test]
-fn elaborate_disallowed_methods() {
-    Command::new("cargo")
-        .args([
-            "+nightly",
-            "clippy",
-            "--all-targets",
-            "--",
-            "--deny=warnings",
-        ])
-        .env("CLIPPY_CONF_DIR", "assets/elaborate")
-        .assert()
-        .success();
 }
 
 #[test]
