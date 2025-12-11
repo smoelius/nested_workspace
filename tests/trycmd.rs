@@ -2,7 +2,7 @@ use anyhow::Result;
 use dir_entry_ext::DirEntryExt;
 use elaborate::std::{
     env::{join_paths_wc, var_os_wc, var_wc},
-    fs::{OpenOptionsContext, read_dir_wc, read_to_string_wc},
+    fs::{OpenOptionsContext, create_dir_wc, read_dir_wc, read_to_string_wc, write_wc},
     path::{PathContext, absolute_wc},
     process::CommandContext,
 };
@@ -186,6 +186,74 @@ fn no_decimal_times() {
         let contents = read_to_string_wc(path).unwrap();
         assert!(!re.is_match(&contents), "{} matches", path.display());
     }
+}
+
+#[test]
+fn cargo_configs() {
+    for result in read_dir_wc("fixtures").unwrap() {
+        let entry = result.unwrap();
+        for (i, result) in WalkDir::new(entry.path())
+            .into_iter()
+            .filter_entry(|entry| {
+                // smoelius: `multiple_toolchains` gets special treatment because it does not use
+                // the stable toolchain.
+                entry.file_name() != "multiple_toolchains"
+                    && entry.path().join("Cargo.toml").exists()
+            })
+            .enumerate()
+        {
+            let entry = result.unwrap();
+            let path = entry.path();
+            assert_cargo_config(path, &subdir(i));
+        }
+    }
+}
+
+fn subdir(i: usize) -> String {
+    let c = u32::try_from(i)
+        .ok()
+        .and_then(|i| char::from_u32(97 + i))
+        .unwrap();
+    format!("{c}")
+}
+
+#[test]
+fn cargo_configs_multiple_toolchains() {
+    assert_cargo_config("fixtures/multiple_toolchains/beta", "beta");
+    assert_cargo_config("fixtures/multiple_toolchains/nightly", "nightly");
+}
+
+fn assert_cargo_config(fixture_path: impl AsRef<Path>, subdir: &str) {
+    let fixture_path = fixture_path.as_ref();
+    let expected_contents = format!(
+        r#"[build]
+target-dir = "{}/target_fixtures/{}"
+"#,
+        path_hops(fixture_path),
+        subdir
+    );
+    if enabled("BLESS") {
+        let cargo_path = fixture_path.join(".cargo");
+        create_dir_wc(&cargo_path).unwrap_or_default();
+        write_wc(cargo_path.join("config.toml"), expected_contents).unwrap();
+    } else {
+        let actual_contents = read_to_string_wc(fixture_path.join(".cargo/config.toml")).unwrap();
+        assert_eq!(expected_contents, actual_contents);
+    }
+}
+
+fn path_hops(path: &Path) -> String {
+    let mut components = path.components().peekable();
+    let component = components.peek().unwrap();
+    assert!(component.as_os_str() == "fixtures");
+    let mut hops = String::new();
+    for _ in components {
+        if !hops.is_empty() {
+            hops.push('/');
+        }
+        hops.push_str("..");
+    }
+    hops
 }
 
 fn touch(path: &Path) -> Result<()> {
