@@ -2,7 +2,7 @@
 error: failed to run custom build command for `no_nw_metadata v0.1.0 ([CWD])`
 
 Caused by:
-  process didn't exit successfully: `[CWD]/target/debug/build/no_nw_metadata-[..]/build-script-build` (exit [..]: 101)
+  process didn't exit successfully: `[CWD]/[..]/debug/build/no_nw_metadata-[..]/build-script-build` (exit [..]: 101)
   --- stdout
 [..]
 

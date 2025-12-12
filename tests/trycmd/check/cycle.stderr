@@ -2,9 +2,9 @@
 error: failed to run custom build command for `cycle v0.1.0 ([CWD])`
 
 Caused by:
-  process didn't exit successfully: `[..] [CWD]/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
+  process didn't exit successfully: `[..] [CWD]/[..]/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
   --- stdout
-  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/[PUT].timestamp
+  cargo::rerun-if-changed=[CWD]/[..]/debug/build/cycle-[..]/out/[PUT].timestamp
 ...
 
   --- stderr
@@ -19,7 +19,7 @@ Caused by:
   error: failed to run custom build command for `cycle v0.1.0 ([CWD])`
 
   Caused by:
-    process didn't exit successfully: `[..] [CWD]/dependent/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
+    process didn't exit successfully: `[..] [CWD]/dependent/[..]/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
     --- stderr
 
     thread 'main' ([..]) panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:

@@ -1,7 +1,0 @@
-args = ["nested", "clean"]
-
-[bin]
-name = "cargo-nested"
-
-[fs]
-cwd = "../../../fixtures/root_with_no_workspace"

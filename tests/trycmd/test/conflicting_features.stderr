@@ -1,22 +1,19 @@
 ...
    Compiling conflicting_features v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/conflicting_features-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/conflicting_features-[..])
 <<< [CWD]/big_endian
 ...
-   Compiling big_endian v0.1.0 ([CWD]/big_endian)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/big_endian-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/big_endian-[..])
 >>> [CWD]/big_endian
 <<< [CWD]/little_endian
 ...
-   Compiling little_endian v0.1.0 ([CWD]/little_endian)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/little_endian-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/little_endian-[..])
 >>> [CWD]/little_endian
 <<< [CWD]/to_bytes
 ...
-   Compiling to_bytes v0.1.0 ([CWD]/to_bytes)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/to_bytes-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/to_bytes-[..])
 >>> [CWD]/to_bytes

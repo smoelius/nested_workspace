@@ -1,16 +1,14 @@
 ...
    Compiling multilayer v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/multilayer-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/multilayer-[..])
 <<< [CWD]/workspace
 ...
-   Compiling single_layer v0.1.0 ([CWD]/workspace/single_layer)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/single_layer-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/single_layer-[..])
 <<< [CWD]/workspace/single_layer/workspace
 ...
-   Compiling package v0.1.0 ([CWD]/workspace/single_layer/workspace/package)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/package-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/package-[..])
 >>> [CWD]/workspace/single_layer/workspace
 >>> [CWD]/workspace

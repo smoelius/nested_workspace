@@ -1,12 +1,10 @@
 ...
    Compiling root_and_non_root_packages v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/root_and_non_root_packages-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/root_and_non_root_packages-[..])
 <<< [CWD]/root_package
 ...
-   Compiling non_root_package v0.1.0 ([CWD]/root_package/non_root_package)
-...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/non_root_package-[..])
-     Running unittests src/lib.rs (target/debug/deps/root_package-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/non_root_package-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/root_package-[..])
 >>> [CWD]/root_package
