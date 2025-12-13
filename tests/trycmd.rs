@@ -2,7 +2,10 @@ use anyhow::Result;
 use dir_entry_ext::DirEntryExt;
 use elaborate::std::{
     env::{join_paths_wc, var_os_wc, var_wc},
-    fs::{OpenOptionsContext, create_dir_wc, read_dir_wc, read_to_string_wc, write_wc},
+    fs::{
+        OpenOptionsContext, create_dir_wc, read_dir_wc, read_to_string_wc, remove_dir_all_wc,
+        write_wc,
+    },
     path::{PathContext, absolute_wc},
     process::CommandContext,
 };
@@ -43,6 +46,14 @@ fn trycmd() {
         .unwrap();
 
     for (subdir, _) in SUBDIR_ARGS {
+        if subdir == "nested_clean" {
+            // smoelius: `cargo nested clean` works, but now that the fixtures share target
+            // directories, the invocations race. So the easiest thing to do is to manually perform
+            // the clean.
+            remove_dir_all_wc("target_fixtures").unwrap();
+            continue;
+        }
+
         let test_cases = TestCases::new();
 
         test_cases.insert_var("[PUT]", "nested_workspace").unwrap();
@@ -76,7 +87,7 @@ fn completeness() {
         let entry = result.unwrap();
         let filename = entry.file_name();
         for (subdir, _) in SUBDIR_ARGS {
-            if subdir == "before" || subdir == "after" {
+            if subdir == "before" || subdir == "nested_clean" || subdir == "after" {
                 continue;
             }
             for extension in ["stderr", "stdout", "toml"] {
@@ -107,7 +118,7 @@ fn completeness() {
 #[test]
 fn correctness() {
     for (subdir, args_expected) in SUBDIR_ARGS {
-        if subdir == "before" || subdir == "after" {
+        if subdir == "before" || subdir == "nested_clean" || subdir == "after" {
             continue;
         }
         let path = Path::new("tests/trycmd").join(subdir);
@@ -193,6 +204,7 @@ fn cargo_configs() {
     for result in read_dir_wc("fixtures").unwrap() {
         let entry = result.unwrap();
         for (i, result) in WalkDir::new(entry.path())
+            .sort_by_file_name()
             .into_iter()
             .filter_entry(|entry| {
                 // smoelius: `multiple_toolchains` gets special treatment because it does not use

@@ -3,9 +3,9 @@
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs ([..]/debug/deps/runner-[..])
 running: ["[..]/runner-[..]"]
-<<< [CWD]/package
+<<< [CWD]/runner_package
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs ([..]/debug/deps/package-[..])
-running: ["[..]/package-[..]"]
->>> [CWD]/package
+     Running unittests src/lib.rs ([..]/debug/deps/runner_package-[..])
+running: ["[..]/runner_package-[..]"]
+>>> [CWD]/runner_package

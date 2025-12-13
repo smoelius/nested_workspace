@@ -1,7 +1,7 @@
 ...
-[multiple_test_targets 0.1.0] <<< [CWD]/package
+[multiple_test_targets 0.1.0] <<< [CWD]/multiple_test_targets_package
 ...
 [multiple_test_targets 0.1.0]     Finished `dev` profile [unoptimized + debuginfo] target(s) in [..]s
-[multiple_test_targets 0.1.0] >>> [CWD]/package
+[multiple_test_targets 0.1.0] >>> [CWD]/multiple_test_targets_package
 ...
     Finished `dev` profile [unoptimized + debuginfo] target(s) in [..]s

@@ -9,6 +9,6 @@
 <<< [CWD]/workspace/single_layer/workspace
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs ([..]/debug/deps/package-[..])
+     Running unittests src/lib.rs ([..]/debug/deps/single_layer_package-[..])
 >>> [CWD]/workspace/single_layer/workspace
 >>> [CWD]/workspace

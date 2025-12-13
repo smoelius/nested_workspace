@@ -2,8 +2,8 @@
    Compiling multiple_test_targets v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs ([..]/debug/deps/multiple_test_targets-[..])
-<<< [CWD]/package
+<<< [CWD]/multiple_test_targets_package
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs ([..]/debug/deps/package-[..])
->>> [CWD]/package
+     Running unittests src/lib.rs ([..]/debug/deps/multiple_test_targets_package-[..])
+>>> [CWD]/multiple_test_targets_package

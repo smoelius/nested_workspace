@@ -14,4 +14,4 @@ nested_workspace = { path = "../.." }
 doctest = false
 
 [package.metadata.nested_workspace]
-roots = ["package"]
+roots = ["git_dependency_package"]

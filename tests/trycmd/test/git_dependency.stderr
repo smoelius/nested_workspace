@@ -2,8 +2,8 @@
    Compiling git_dependency v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs ([..]/debug/deps/git_dependency-[..])
-<<< [CWD]/package
+<<< [CWD]/git_dependency_package
 ...
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs ([..]/debug/deps/package-[..])
->>> [CWD]/package
+     Running unittests src/lib.rs ([..]/debug/deps/git_dependency_package-[..])
+>>> [CWD]/git_dependency_package
