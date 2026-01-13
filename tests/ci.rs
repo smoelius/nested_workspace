@@ -13,6 +13,20 @@ fn initialize() {
 }
 
 #[test]
+fn clippy() {
+    let mut command = assert_cmd::Command::new("cargo");
+    command.args([
+        "+nightly",
+        "clippy",
+        "--all-targets",
+        "--offline",
+        "--",
+        "--deny=warnings",
+    ]);
+    command.assert().success();
+}
+
+#[test]
 fn doctests_are_disabled() {
     for dir in ["example", "fixtures"] {
         for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR")).join(dir)) {
@@ -45,6 +59,15 @@ fn dylint() {
         .assert();
     let stderr = String::from_utf8(assert.get_output().stderr.clone()).unwrap();
     assert!(assert.try_success().is_ok(), "{}", stderr);
+}
+
+#[test]
+fn elaborate_disallowed_methods() {
+    elaborate::disallowed_methods()
+        .args(["--all-features", "--all-targets"])
+        .env("RUSTUP_TOOLCHAIN", "nightly")
+        .assert()
+        .success();
 }
 
 #[test]
