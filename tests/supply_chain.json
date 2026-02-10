@@ -88,12 +88,6 @@
     ],
     "bitflags": [
       {
-        "id": 3,
-        "kind": "user",
-        "login": "huonw",
-        "name": "Huon Wilson"
-      },
-      {
         "id": 51,
         "kind": "team",
         "login": "github:rust-lang-nursery:libs",
@@ -104,12 +98,6 @@
         "kind": "user",
         "login": "KodrAus",
         "name": "Ashley Mannix"
-      },
-      {
-        "id": 4416,
-        "kind": "team",
-        "login": "github:bitflags:owners",
-        "name": "owners"
       }
     ],
     "camino": [
