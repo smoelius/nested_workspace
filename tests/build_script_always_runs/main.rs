@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 mod util;
 use util::Timestamps;
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn initialize() {
     unsafe {
         remove_var("CARGO_TERM_COLOR");

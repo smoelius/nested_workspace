@@ -27,7 +27,7 @@ const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
     ("after", &[]),
 ];
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn initialize() {
     unsafe {
         remove_var("CARGO_TERM_COLOR");
