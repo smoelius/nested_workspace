@@ -5,7 +5,7 @@ use std::{env::remove_var, ffi::OsStr, path::Path, process::Command};
 use tempfile::tempdir;
 use walkdir::WalkDir;
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn initialize() {
     unsafe {
         remove_var("CARGO_TERM_COLOR");
