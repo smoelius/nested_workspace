@@ -150,6 +150,26 @@
         "name": "Ed Page"
       }
     ],
+    "dispatch2": [
+      {
+        "id": 3246,
+        "kind": "user",
+        "login": "simlay",
+        "name": "simlay"
+      },
+      {
+        "id": 20758,
+        "kind": "user",
+        "login": "marysaka",
+        "name": "Mary Guillemard"
+      },
+      {
+        "id": 36629,
+        "kind": "user",
+        "login": "madsmtm",
+        "name": "Mads Marquart"
+      }
+    ],
     "elaborate": [
       {
         "id": 13063,
@@ -366,6 +386,20 @@
         "name": null
       }
     ],
+    "objc2": [
+      {
+        "id": 3246,
+        "kind": "user",
+        "login": "simlay",
+        "name": "simlay"
+      },
+      {
+        "id": 36629,
+        "kind": "user",
+        "login": "madsmtm",
+        "name": "Mads Marquart"
+      }
+    ],
     "objc2-core-foundation": [
       {
         "id": 3246,
@@ -380,7 +414,49 @@
         "name": "Mads Marquart"
       }
     ],
+    "objc2-encode": [
+      {
+        "id": 3246,
+        "kind": "user",
+        "login": "simlay",
+        "name": "simlay"
+      },
+      {
+        "id": 36629,
+        "kind": "user",
+        "login": "madsmtm",
+        "name": "Mads Marquart"
+      }
+    ],
+    "objc2-foundation": [
+      {
+        "id": 3246,
+        "kind": "user",
+        "login": "simlay",
+        "name": "simlay"
+      },
+      {
+        "id": 36629,
+        "kind": "user",
+        "login": "madsmtm",
+        "name": "Mads Marquart"
+      }
+    ],
     "objc2-io-kit": [
+      {
+        "id": 3246,
+        "kind": "user",
+        "login": "simlay",
+        "name": "simlay"
+      },
+      {
+        "id": 36629,
+        "kind": "user",
+        "login": "madsmtm",
+        "name": "Mads Marquart"
+      }
+    ],
+    "objc2-open-directory": [
       {
         "id": 3246,
         "kind": "user",
