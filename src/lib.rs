@@ -147,7 +147,8 @@ impl Builder {
 const TIMESTAMP_CONTENTS: &str =
     "This file has an mtime of when a Nested Workspace build script was started.
 
-https://github.com/smoelius/nested_workspace";
+https://github.com/smoelius/nested_workspace\
+     ";
 
 // smoelius: Variant of @juggle-tux's idea here:
 // https://users.rust-lang.org/t/how-can-i-make-build-rs-rerun-every-time-that-cargo-run-or-cargo-build-is-run/51852/5
@@ -210,7 +211,7 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         let _delimiter = Delimiter::new(root);
         let mut command = build_cargo_command(source, package_name.as_deref(), subcommand, args)?;
         command.current_dir(root);
-        debug!("{source}: {:?}", &command);
+        debug!("{source}: {command:?}");
         let status = command.status_wc()?;
         ensure!(status.success(), "command failed: {command:?}");
         // smoelius: `cargo nested` is a special case. It must be run manually on each nested
