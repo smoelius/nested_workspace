@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.5
+
+- Bump Rust version to 1.95
+- Dependency updates
+  - `elaborate` upgraded to version 0.2
+  - `sysinfo` upgraded to version 0.39
+
 ## 0.7.4
 
 - Verify the each nested workspace root contains a workspace at the named location ([#98](https://github.com/smoelius/nested_workspace/pull/98))
