@@ -208,16 +208,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
 
 [[package]]
-name = "ctor"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "378f0974ae2468eaf63aa036dbe9c926b0dc7ea64c156f2ea618bc2f75b934f0"
-dependencies = [
- "link-section",
- "linktime-proc-macro",
-]
-
-[[package]]
 name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -427,18 +417,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "link-section"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c8600ca3dbe044f07955b443ff606c50f45295b863289bbe7d0844d50cf11e4"
-
-[[package]]
-name = "linktime-proc-macro"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a44cd706ff0d503ee32b2071166510ca27e281228de10cd3aa8d35ff94560f81"
-
-[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -464,7 +442,6 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "cargo_metadata",
- "ctor",
  "dir-entry-ext",
  "elaborate",
  "env_logger",

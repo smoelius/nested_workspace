@@ -1,16 +1,9 @@
 use assert_cmd::assert::OutputAssertExt;
 use elaborate::std::{fs::read_to_string_wc, path::PathContext, process::CommandContext};
 use regex::Regex;
-use std::{env::remove_var, ffi::OsStr, path::Path, process::Command};
+use std::{ffi::OsStr, path::Path, process::Command};
 use tempfile::tempdir;
 use walkdir::WalkDir;
-
-#[ctor::ctor(unsafe)]
-fn initialize() {
-    unsafe {
-        remove_var("CARGO_TERM_COLOR");
-    }
-}
 
 #[test]
 fn clippy() {

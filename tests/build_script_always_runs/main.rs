@@ -2,20 +2,11 @@ use anyhow::{Result, ensure};
 use assert_cmd::{assert::OutputAssertExt, output::OutputError};
 use cargo_metadata::MetadataCommand;
 use elaborate::std::{path::PathContext, process::CommandContext};
-use std::{
-    env::remove_var, ffi::OsStr, path::Path, path::PathBuf, process::Command, sync::LazyLock,
-};
+use std::{ffi::OsStr, path::Path, path::PathBuf, process::Command, sync::LazyLock};
 use walkdir::WalkDir;
 
 mod util;
 use util::Timestamps;
-
-#[ctor::ctor(unsafe)]
-fn initialize() {
-    unsafe {
-        remove_var("CARGO_TERM_COLOR");
-    }
-}
 
 static CARGO_NESTED: LazyLock<PathBuf> = LazyLock::new(|| {
     Command::new("cargo")
