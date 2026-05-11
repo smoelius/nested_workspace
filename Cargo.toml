@@ -23,7 +23,6 @@ sysinfo = "0.39"
 
 [dev-dependencies]
 assert_cmd = "2.2"
-ctor = "1.0"
 regex = "1.12"
 similar-asserts = "2.0"
 tempfile = "3.27"

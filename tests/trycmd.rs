@@ -8,7 +8,7 @@ use elaborate::std::{
 };
 use regex::Regex;
 use std::{
-    env::{remove_var, split_paths},
+    env::split_paths,
     ffi::{OsStr, OsString},
     fs::OpenOptions,
     path::{Path, PathBuf},
@@ -26,13 +26,6 @@ const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
     ("test", &["test", "--workspace"]),
     ("after", &[]),
 ];
-
-#[ctor::ctor(unsafe)]
-fn initialize() {
-    unsafe {
-        remove_var("CARGO_TERM_COLOR");
-    }
-}
 
 #[test]
 fn trycmd() {
