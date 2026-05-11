@@ -29,9 +29,6 @@ jobs:
       run:
         shell: bash
 
-    env:
-      GROUP_RUNNER: target.'cfg(all())'.runner = 'group-runner'
-
     steps:
       - uses: actions/checkout@v6
 
@@ -62,13 +59,13 @@ jobs:
           cargo install cargo-dylint dylint-link         || true
           cargo install cargo-msrv --no-default-features || true
           cargo install cargo-supply-chain               || true
-          cargo install group-runner                     || true
+          cargo install unset                            || true
 
       - name: Build
         run: cargo build --workspace --all-targets
 
       - name: Test all but example
-        run: cargo test --workspace --exclude nested_workspace_example --config "$GROUP_RUNNER" -- --nocapture
+        run: cargo test --workspace --exclude nested_workspace_example --config "target.'cfg(all())'.runner = 'unset'" -- --nocapture
 
       - name: Test example
         run: cargo test -p nested_workspace_example -- --nocapture
