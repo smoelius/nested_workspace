@@ -443,6 +443,7 @@ dependencies = [
  "assert_cmd",
  "cargo_metadata",
  "dir-entry-ext",
+ "dunce",
  "elaborate",
  "env_logger",
  "glob",

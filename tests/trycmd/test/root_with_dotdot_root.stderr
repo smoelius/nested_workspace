@@ -1,0 +1,10 @@
+...
+   Compiling root_with_dotdot_root v0.1.0 ([CWD])
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/root_with_dotdot_root-[..])
+<<< [CWD]/../root_with_dotdot_root/workspace
+...
+[..]package v0.1.0 ([CWD]/workspace/package)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/package-[..])
+>>> [CWD]/../root_with_dotdot_root/workspace
