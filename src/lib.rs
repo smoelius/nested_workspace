@@ -293,5 +293,6 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
 /// Run `cargo metadata` in `root` and verify there is a workspace rooted there.
 fn validate_root(root: &Path) -> Result<bool> {
     let cargo_metadata = MetadataCommand::new().current_dir(root).no_deps().exec()?;
-    Ok(root == cargo_metadata.workspace_root)
+    let root_canonical = dunce::canonicalize(root)?;
+    Ok(root_canonical == cargo_metadata.workspace_root)
 }
