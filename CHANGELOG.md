@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6
+
+- Expand "refusing to build/check" message ([91f1fa4](https://github.com/smoelius/nested_workspace/commit/91f1fa4ad0914cd3ea802706910d39b4cfd4a641))
+- Canonicalize nested workspace roots. This fixes the handling of nested workspaces in sibling directories. ([21ca97a](https://github.com/smoelius/nested_workspace/commit/21ca97a0714276d4239853d33a101f308965b602))
+- Dependency updates
+  - `elaborate` upgraded to version 1
+
 ## 0.7.5
 
 - Bump Rust version to 1.95
