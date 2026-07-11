@@ -20,7 +20,7 @@ For example, the follow command runs `cargo clean` on the current package or wor
 cargo nested clean
 ```
 
-**Note:** `cargo nested build` and `cargo nested test` should also work. However, they may result in extra calls to `cargo build` and `cargo test` (respectively) if direct support for these commands is configured (as describe next).
+`cargo nested build` and `cargo nested test` also work. While `cargo nested` is running, direct support configured as described below is disabled so that it does not cause additional builds or tests of nested workspaces.
 
 ## Usage
 

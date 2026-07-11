@@ -17,6 +17,8 @@ use std::{
     time::SystemTime,
 };
 
+mod cargo_nested;
+
 mod command;
 use command::parent_cargo_command;
 pub use command::{
@@ -105,6 +107,12 @@ impl Builder {
             // that we can call `cargo build` for the nested workspaces. `force_rerun` is a hack
             // to achieve this.
             force_rerun().unwrap();
+        }
+
+        // `cargo nested` traverses nested workspaces itself. Do not also traverse them through a
+        // containing package's build script or test, as that would run commands more than once.
+        if cargo_nested::enabled() {
+            return;
         }
 
         self.run_parent_cargo_command_on_current_package_nested_workspace_roots()
