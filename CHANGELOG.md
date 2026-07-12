@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.7
+
+- Eliminate redundant work performed by `cargo nested check`, etc. Previously, such commands would cause additional executions of a nested workspace's build scripts. This is no longer the case. ([1e5cabb](https://github.com/smoelius/nested_workspace/commit/1e5cabb8a0ad8f1f203cc51bdcc3357c8078fecd))
+
 ## 0.7.6
 
 - Expand "refusing to build/check" message ([91f1fa4](https://github.com/smoelius/nested_workspace/commit/91f1fa4ad0914cd3ea802706910d39b4cfd4a641))
