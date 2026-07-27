@@ -40,10 +40,15 @@ Furthermore, the following steps are required:
    [package.metadata.nested_workspace]
    roots = [
       "nested_workspace_a",
-      "nested_workspace_b",
+      { path = "nested_workspace_b", dependent = true },
       ...
    ]
    ```
+
+   A root can be either a path string or a table containing `path` and `dependent`. If a nested
+   workspace depends on the containing package, set `dependent = true` so that reentering the
+   containing package's build script exits silently instead of failing the build with a
+   workspace-cycle error. The default is `false`.
 
 2. To enable direct support for `cargo build` and `cargo check`, add `nested_workspace` as `build-dependency` to the containing package's Cargo.toml:
 

@@ -22,7 +22,8 @@ mod cargo_nested;
 mod command;
 use command::parent_cargo_command;
 pub use command::{
-    CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
+    CargoSubcommand, PackageContext, build_cargo_command, parse_cargo_command,
+    parse_cargo_subcommand,
 };
 
 mod reentrancy_guard;
@@ -33,7 +34,38 @@ use util::{Delimiter, StripCurrentDir};
 
 #[derive(Deserialize)]
 struct Metadata {
-    roots: Vec<String>,
+    roots: Vec<MetadataRoot>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum MetadataRoot {
+    Path(String),
+    PathWithDependent {
+        path: String,
+        #[serde(default)]
+        dependent: bool,
+    },
+}
+
+impl MetadataRoot {
+    fn path(&self) -> &str {
+        match self {
+            Self::Path(path) | Self::PathWithDependent { path, .. } => path,
+        }
+    }
+
+    fn dependent(&self) -> bool {
+        match self {
+            Self::Path(_) => false,
+            Self::PathWithDependent { dependent, .. } => *dependent,
+        }
+    }
+}
+
+struct NestedWorkspaceRoot {
+    path: PathBuf,
+    package: PackageContext,
 }
 
 #[derive(Clone, Copy)]
@@ -99,7 +131,9 @@ impl Builder {
 
     pub fn unwrap(self) {
         if matches!(self.source, Source::BuildScript) {
-            check_reentrancy_guard().unwrap();
+            if check_reentrancy_guard().unwrap() {
+                return;
+            }
 
             // smoelius: Suppose a user runs `cargo check` followed by `cargo build`. Cargo's
             // default behavior is to run the build script for the first command (`cargo check`),
@@ -140,7 +174,7 @@ impl Builder {
             for root in &roots {
                 println!(
                     "cargo::warning=    {}",
-                    root.as_path().strip_current_dir().display()
+                    root.path.as_path().strip_current_dir().display()
                 );
             }
             return Ok(());
@@ -206,7 +240,7 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     subcommand: &CargoSubcommand,
     args: &[T],
     dir: Option<&Path>,
-    roots: &[PathBuf],
+    roots: &[NestedWorkspaceRoot],
     is_recursive_call: bool,
 ) -> Result<()> {
     env_logger::try_init().unwrap_or_default();
@@ -220,24 +254,23 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         }
         return Ok(());
     }
-    let package_name = var_wc("CARGO_PKG_NAME").ok();
     for root in roots {
-        let _delimiter = Delimiter::new(root);
-        let mut command = build_cargo_command(source, package_name.as_deref(), subcommand, args)?;
-        command.current_dir(root);
+        let _delimiter = Delimiter::new(&root.path);
+        let mut command = build_cargo_command(source, Some(&root.package), subcommand, args)?;
+        command.current_dir(&root.path);
         debug!("{source}: {command:?}");
         let status = command.status_wc()?;
         ensure!(status.success(), "command failed: {command:?}");
         // smoelius: `cargo nested` is a special case. It must be run manually on each nested
         // workspace root to ensure that _nested_-nested workspaces are handled.
         if matches!(source, Source::CargoNested) {
-            run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, root, true)?;
+            run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, &root.path, true)?;
         }
     }
     Ok(())
 }
 
-fn current_package_nested_workspace_roots() -> Result<Vec<PathBuf>> {
+fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> {
     let cargo_manifest_path = var_wc("CARGO_MANIFEST_PATH")?;
     let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
     let Some(package) = cargo_metadata
@@ -253,7 +286,7 @@ fn current_package_nested_workspace_roots() -> Result<Vec<PathBuf>> {
     Ok(roots)
 }
 
-fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<PathBuf>> {
+fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
     let mut roots = Vec::new();
     let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
     for package in &cargo_metadata.packages {
@@ -264,7 +297,9 @@ fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(roots)
 }
 
-fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<PathBuf>>> {
+fn nested_workspace_roots_for_package(
+    package: &Package,
+) -> Result<Option<Vec<NestedWorkspaceRoot>>> {
     let Some(nested_workspace_value) = package
         .metadata
         .as_object()
@@ -281,8 +316,8 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
     let nested_workspace_metadata =
         serde_json::from_value::<Metadata>(nested_workspace_value.clone())?;
     let mut roots = Vec::new();
-    for pattern in nested_workspace_metadata.roots {
-        for result in glob(&format!("{cargo_manifest_dir}/{pattern}"))? {
+    for root in nested_workspace_metadata.roots {
+        for result in glob(&format!("{cargo_manifest_dir}/{}", root.path()))? {
             let path = result?;
             if !validate_root(&path)? {
                 writeln!(
@@ -292,7 +327,13 @@ fn nested_workspace_roots_for_package(package: &Package) -> Result<Option<Vec<Pa
                 )?;
                 continue;
             }
-            roots.push(path);
+            roots.push(NestedWorkspaceRoot {
+                path,
+                package: PackageContext {
+                    name: package.name.to_string(),
+                    dependent: root.dependent(),
+                },
+            });
         }
     }
     Ok(Some(roots))
