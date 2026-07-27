@@ -1,5 +1,7 @@
 use crate::{
-    Source, cargo_nested::CARGO_NESTED_ENV, reentrancy_guard::reentrancy_guard_from_package_name,
+    Source,
+    cargo_nested::CARGO_NESTED_ENV,
+    reentrancy_guard::{dependent_from_package_name, reentrancy_guard_from_package_name},
 };
 use anyhow::{Result, bail};
 use elaborate::std::{ffi::OsStrContext, path::PathContext};
@@ -36,6 +38,12 @@ impl std::fmt::Display for CargoSubcommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_os_str().display())
     }
+}
+
+#[derive(Clone)]
+pub struct PackageContext {
+    pub name: String,
+    pub dependent: bool,
 }
 
 static SYSTEM: LazyLock<System> = LazyLock::new(|| {
@@ -113,7 +121,7 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
 
 pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     source: Source,
-    package_name: Option<&str>,
+    package: Option<&PackageContext>,
     subcommand: &CargoSubcommand,
     args: &[T],
 ) -> Result<Command> {
@@ -132,7 +140,10 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
         }
         (Source::Test, CargoSubcommand::Test) => {
             let args = std::iter::once(OsString::from("--workspace"))
-                .chain(filter_package_and_workspace(package_name, args))
+                .chain(filter_package_and_workspace(
+                    package.map(|package| package.name.as_str()),
+                    args,
+                ))
                 .collect();
             (OsStr::new("test"), args)
         }
@@ -154,11 +165,15 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
             command.env(CARGO_NESTED_ENV, "1");
         }
         Source::BuildScript => {
-            let Some(package_name) = package_name else {
+            let Some(package) = package else {
                 bail!("failed to get package name");
             };
-            let reentrancy_guard = reentrancy_guard_from_package_name(package_name);
+            let reentrancy_guard = reentrancy_guard_from_package_name(&package.name);
             command.env(reentrancy_guard, "1");
+            if package.dependent {
+                let dependent = dependent_from_package_name(&package.name);
+                command.env(dependent, "1");
+            }
         }
         Source::Test => {}
     }
