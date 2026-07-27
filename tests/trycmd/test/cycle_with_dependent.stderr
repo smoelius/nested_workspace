@@ -1,0 +1,10 @@
+...
+   Compiling cycle_with_dependent v0.1.0 ([CWD])
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/cycle_with_dependent-[..])
+<<< [CWD]/dependent
+...
+   Compiling dependent v0.1.0 ([CWD]/dependent)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/debug/deps/dependent-[..])
+>>> [CWD]/dependent
