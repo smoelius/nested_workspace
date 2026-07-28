@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.0
+
+- FEATURE: Add `dependent` option to allow nested workspaces to depend on their containing packages ([#155](https://github.com/smoelius/nested_workspace/pull/155))
+
 ## 0.7.7
 
 - Eliminate redundant work performed by `cargo nested check`, etc. Previously, such commands would cause additional executions of a nested workspace's build scripts. This is no longer the case. ([1e5cabb](https://github.com/smoelius/nested_workspace/commit/1e5cabb8a0ad8f1f203cc51bdcc3357c8078fecd))
