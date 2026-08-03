@@ -1,12 +1,12 @@
 ...
    Compiling runner v0.1.0 ([CWD])
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/runner-[..])
+     Running unittests src/lib.rs (target/debug/[..]/runner-[..])
 running: ["[..]/runner-[..]"]
 <<< [CWD]/package
 ...
    Compiling package v0.1.0 ([CWD]/package)
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
-     Running unittests src/lib.rs (target/debug/deps/package-[..])
+     Running unittests src/lib.rs (target/debug/[..]/package-[..])
 running: ["[..]/package-[..]"]
 >>> [CWD]/package
