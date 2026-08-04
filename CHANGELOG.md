@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+- FEATURE: Improved `cargo-nested` argument parsing. `cargo-nested` now supports `--help` and `--version`, for example. ([003798e](https://github.com/smoelius/nested_workspace/commit/003798e4d7ab5affe00a2af6bc5bbf519eb198a4))
+- Dependency updates
+  - `elaborate` upgraded to version 2.0
+
 ## 0.8.0
 
 - FEATURE: Add `dependent` option to allow nested workspaces to depend on their containing packages ([#155](https://github.com/smoelius/nested_workspace/pull/155))
