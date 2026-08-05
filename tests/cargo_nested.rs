@@ -33,3 +33,40 @@ fn check_does_not_warn_about_offline() {
     assert!(stdout.contains("nested_workspace.timestamp"));
     assert!(!stderr.contains("Since `--offline` was not passed"));
 }
+
+#[test]
+fn list_cycle() {
+    let output = Command::new(&*CARGO_NESTED)
+        .args(["nested", "--list"])
+        .current_dir("fixtures/cycle")
+        .output_wc()
+        .unwrap();
+
+    output.assert().success().stdout("dependent\n").stderr("");
+}
+
+#[test]
+fn list_cycle_with_dependent() {
+    let output = Command::new(&*CARGO_NESTED)
+        .args(["nested", "--list"])
+        .current_dir("fixtures/cycle_with_dependent")
+        .output_wc()
+        .unwrap();
+
+    output
+        .assert()
+        .success()
+        .stdout("dependent (dependent)\n")
+        .stderr("");
+}
+
+#[test]
+fn list_no_roots() {
+    let output = Command::new(&*CARGO_NESTED)
+        .args(["nested", "--list"])
+        .current_dir("fixtures/no_roots")
+        .output_wc()
+        .unwrap();
+
+    output.assert().success().stdout("").stderr("");
+}
