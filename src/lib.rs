@@ -63,9 +63,21 @@ impl MetadataRoot {
     }
 }
 
-struct NestedWorkspaceRoot {
+pub struct NestedWorkspaceRoot {
     path: PathBuf,
     package: PackageContext,
+}
+
+impl NestedWorkspaceRoot {
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    #[must_use]
+    pub fn dependent(&self) -> bool {
+        self.package.dependent
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -286,7 +298,7 @@ fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> 
     Ok(roots)
 }
 
-fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
+pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
     let mut roots = Vec::new();
     let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
     for package in &cargo_metadata.packages {
