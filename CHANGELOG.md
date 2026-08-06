@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0
+
+- BREAKING: Bump the major version so that future feature additions do not appear to be breaking changes.
+- FEATURE: Add `cargo-nested` `--list` option to list nested workspaces. ([7106d16](https://github.com/smoelius/nested_workspace/commit/7106d16e52fdaa056165fef7af53f75edff0acff))
+
 ## 0.9.0
 
 - FEATURE: Improved `cargo-nested` argument parsing. `cargo-nested` now supports `--help` and `--version`, for example. ([003798e](https://github.com/smoelius/nested_workspace/commit/003798e4d7ab5affe00a2af6bc5bbf519eb198a4))
