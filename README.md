@@ -109,6 +109,12 @@ All arguments are forwarded; no arguments are filtered out or added.
 
 A primary reason for this policy is that the arguments accepted by an arbitrary subcommand cannot be predicted. For example, a subcommand might not accept `--workspace`, or it might consider `-p` to mean something other than "package".
 
+`cargo nested <subcommand>` can also be used when Nested Workspace's direct support for `cargo build`, `cargo check`, or `cargo test` would filter out a needed argument. For example, the following command runs `cargo check --locked` on the current package or workspace and each nested workspace:
+
+```
+cargo nested check --locked
+```
+
 ## Known problem: potential deadlocks
 
 Nested Workspace has safeguards to avoid potential deadlocks.
