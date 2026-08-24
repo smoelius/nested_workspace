@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+
+- BREAKING: Rework argument handling. Specifically, forward `--frozen` and `--locked` when running `cargo build` or `cargo check` on a nested workspace. Also, fix a bug that caused `--workspace` to be passed twice to `cargo test` when the name of a nested workspace's containing package could not be determined. ([55d9509](https://github.com/smoelius/nested_workspace/commit/55d95095b9912a5af92164e11c531cb73a3f525a))
+- BREAKING: Always pass `--offline` in commands run on nested workspaces. Note that this change makes the "refusing to build/check" warnings no longer relevant. Thus, such warnings are no longer emitted. ([8901fbb](https://github.com/smoelius/nested_workspace/commit/8901fbbf9201ac5b9f1cc6c33f07a6760126f701))
+
 ## 1.0.0
 
 - BREAKING: Bump the major version so that future feature additions do not appear to be breaking changes.
