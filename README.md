@@ -87,7 +87,7 @@ Furthermore, the following steps are required:
 
 - The following arguments are prepended to the arguments passed: `-vv`, `--offline`, and `--workspace`.
   - `-vv` aids in debugging.
-  - `--offline` avoids potential deadlocks (see [Known problem] below).
+  - `--offline` helps to avoid deadlocks (see [Known problem] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
 - The following arguments are forwarded: `--frozen` and `--locked`.
@@ -96,7 +96,9 @@ Furthermore, the following steps are required:
 
 ### `cargo test`
 
-- The following argument is prepended to the arguments passed: `--workspace`. (The reason for prepending this argument is to ensure it does not appear after `--` and is thus rejected by `libtest`.)
+- The following arguments are prepended to the arguments passed: `--offline` and `--workspace`. (The reason for prepending these arguments is to ensure they do not appear after `--` and are thus rejected by `libtest`.)
+  - `--offline` helps to avoid deadlocks (see [Known problem] below).
+  - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
 - The following arguments are filtered out: `-p <containing-package>` and `--package <containing-package>`.
 
@@ -112,17 +114,13 @@ A primary reason for this policy is that the arguments accepted by an arbitrary 
 
 Nested Workspace has safeguards to avoid potential deadlocks.
 
-A build script holds a lock on the build directory while running. Furthermore, `cargo check` tries to obtain a lock on the package cache unless `--offline` is passed. Thus, the following scenario could occur:
+A build script holds a lock on the build directory while running. Furthermore, `cargo check` tries to obtain a lock on the package cache unless `--frozen` or `--offline` is passed. Thus, the following scenario could occur:
 
 - Thread A runs `cargo check`, which locks the package cache, locks the build directory, and then releases the lock on the package cache.
 - Thread B runs `cargo check`, which locks the package cache and tries to lock the build directory, but blocks because thread A holds the lock.
 - Thread A runs the build script, which runs `cargo check` and tries to lock the package cache, but blocks because thread B holds the lock.
 
-To avoid this scenario, Nested Workspace checks whether `--offline` was passed to the parent command (i.e., the Cargo command that caused the build script to be run). If not, Nested Workspace exits with a warning like the following:
-
-```
-Refusing to check as `--offline` was not passed to parent command
-```
+To avoid this scenario, Nested Workspace always passes `--offline` in commands run on nested workspaces.
 
 Thus, in the scenario above, thread A would not hold a lock on the package cache, thereby avoiding the deadlock.
 

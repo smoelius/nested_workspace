@@ -34,7 +34,6 @@ walkdir = "2.5"
 dir-entry-ext = { path = "dir-entry-ext", features = ["walkdir"] }
 
 [features]
-__disable_offline_check = []
 __disable_supply_chain_test = []
 
 [lints]

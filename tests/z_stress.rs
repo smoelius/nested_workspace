@@ -1,7 +1,8 @@
 //! Performs repeated calls to `cargo check` and `cargo +nighty check` in attempt to cause a
 //! deadlock.
 //!
-//! If either thread runs without `--offline`, the test is likely to deadlock.
+//! Note that Nested Workspace always passes `--offline` in commands run on nested workspaces. Thus,
+//! a deadlock should not occur.
 
 use anyhow::{Result, ensure};
 use elaborate::std::process::CommandContext;
@@ -29,13 +30,7 @@ fn check(nightly: bool) -> Result<()> {
     if nightly {
         command.arg("+nightly");
     }
-    command.args([
-        "check",
-        "-vv",
-        "--features=nested_workspace/__disable_offline_check",
-    ]);
-    // smoelius: Commenting out the next line should cause a deadlock.
-    command.arg("--offline");
+    command.args(["check", "-vv"]);
     command.current_dir("example");
     let status = command.status_wc().unwrap();
     ensure!(status.success());

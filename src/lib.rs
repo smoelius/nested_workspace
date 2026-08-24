@@ -30,7 +30,7 @@ mod reentrancy_guard;
 use reentrancy_guard::check_reentrancy_guard;
 
 mod util;
-use util::{Delimiter, StripCurrentDir};
+use util::Delimiter;
 
 #[derive(Deserialize)]
 struct Metadata {
@@ -172,25 +172,6 @@ impl Builder {
         args.extend(subcommand_args.iter().map(OsString::from));
 
         let roots = current_package_nested_workspace_roots()?;
-
-        #[cfg(not(feature = "__disable_offline_check"))]
-        if matches!(subcommand, CargoSubcommand::Build | CargoSubcommand::Check)
-            && !subcommand_args
-                .iter()
-                .any(|arg| arg == "--frozen" || arg == "--offline")
-        {
-            println!(
-                "cargo::warning=Since `--offline` was not passed to parent command, refusing to \
-                 {subcommand} the following nested workspaces:"
-            );
-            for root in &roots {
-                println!(
-                    "cargo::warning=    {}",
-                    root.path.as_path().strip_current_dir().display()
-                );
-            }
-            return Ok(());
-        }
 
         run_cargo_subcommand_on_nested_workspace_roots(
             self.source,
