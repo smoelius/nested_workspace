@@ -37,9 +37,8 @@ impl Drop for Delimiter<'_> {
     }
 }
 
-// smoelius: When `__disable_offline_check` is enabled, `StripCurrentDir` appears unused. Hence,
-// this `allow` cannot be `expect`.
-#[allow(dead_code)]
+// smoelius: `StripCurrentDir` is currently unused.
+#[expect(dead_code)]
 pub trait StripCurrentDir {
     fn strip_current_dir(&self) -> &Self;
 }

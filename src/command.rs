@@ -194,10 +194,13 @@ fn build_or_check_args<T: AsRef<OsStr>>(args_in: &[T]) -> Vec<OsString> {
 }
 
 fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args_in: &[T]) -> Vec<OsString> {
-    // smoelius: The following argument is prepended to the arguments passed: `--workspace`. (The
-    // reason for prepending this argument is to ensure it does not appear after `--` and is thus
-    // rejected by `libtest`.)
-    let mut args_out = vec![OsString::from("--workspace")];
+    // smoelius: The following arguments are prepended to the arguments passed: `--offline` and
+    // `--workspace`. (The reason for prepending these arguments is to ensure they do not appear
+    // after `--` and are thus rejected by `libtest`.)
+    let mut args_out = ["--offline", "--workspace"]
+        .iter()
+        .map(OsString::from)
+        .collect::<Vec<_>>();
     let package_name = package_name.map(OsStr::new);
     let mut iter = args_in.iter().peekable();
     while let Some(arg) = iter.next() {
@@ -211,7 +214,7 @@ fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args_in: &[T]) -> Vec<
             let _: Option<&T> = iter.next();
             continue;
         }
-        if arg_as_ref == OsStr::new("--workspace") {
+        if arg_as_ref == OsStr::new("--offline") || arg_as_ref == OsStr::new("--workspace") {
             continue;
         }
         // smoelius: All arguments besides those covered by the previous bullet are forwarded.
@@ -272,9 +275,10 @@ mod tests {
     }
 
     #[test]
-    fn test_without_package_prepends_workspace() {
+    fn test_without_package_prepends_offline_and_workspace() {
         const ARGS_IN: &[&[&str]] = &[
             &["--", "--nocapture"],
+            &["--offline", "--", "--nocapture"],
             &["--workspace", "--", "--nocapture"],
         ];
         for args_in in ARGS_IN {
@@ -285,6 +289,7 @@ mod tests {
             assert_eq!(
                 [
                     OsStr::new("test"),
+                    OsStr::new("--offline"),
                     OsStr::new("--workspace"),
                     OsStr::new("--"),
                     OsStr::new("--nocapture"),
