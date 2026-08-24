@@ -129,24 +129,16 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     let (subcommand, args) = match (&source, &subcommand) {
         // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
         // running `cargo build` would be too much). For all other cases, run `cargo build`.
-        // smoelius: Do not forward `args` to `cargo build` or `cargo check`. If `args` contains
-        // `--manifest-path ...`, for example, the command could block. Do, however, pass `-vv` and
-        // `--workspace`. The former aids in debugging.
         (Source::BuildScript, CargoSubcommand::Check) => {
-            (OsStr::new("check"), build_or_check_args())
+            (OsStr::new("check"), build_or_check_args(args))
         }
         (Source::BuildScript, _subcommand_other_than_check) => {
-            (OsStr::new("build"), build_or_check_args())
+            (OsStr::new("build"), build_or_check_args(args))
         }
-        (Source::Test, CargoSubcommand::Test) => {
-            let args = std::iter::once(OsString::from("--workspace"))
-                .chain(filter_package_and_workspace(
-                    package.map(|package| package.name.as_str()),
-                    args,
-                ))
-                .collect();
-            (OsStr::new("test"), args)
-        }
+        (Source::Test, CargoSubcommand::Test) => (
+            OsStr::new("test"),
+            test_args(package.map(|package| package.name.as_str()), args),
+        ),
         // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
         // accept such an option. `cargo fmt` is an example.
         (Source::CargoNested, _) => {
@@ -180,25 +172,40 @@ pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     Ok(command)
 }
 
-fn build_or_check_args() -> Vec<OsString> {
-    ["-vv", "--offline", "--workspace"]
+fn build_or_check_args<T: AsRef<OsStr>>(args_in: &[T]) -> Vec<OsString> {
+    // smoelius: The following arguments are prepended to the arguments passed: `-vv`, `--offline`,
+    // and `--workspace`.
+    let mut args_out = ["-vv", "--offline", "--workspace"]
         .iter()
         .map(OsString::from)
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+    for arg in args_in {
+        // smoelius: The following arguments are forwarded: `--frozen` and `--locked`.
+        let arg_as_ref = arg.as_ref();
+        if arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked") {
+            args_out.push(arg_as_ref.to_owned());
+        }
+        // smoelius: All arguments besides those covered by the previous bullet are filtered out,
+        // i.e., no other arguments are forwarded. Do not forward other `args` to `cargo build` or
+        // `cargo check`. If `args` contains `--manifest-path ...`, for example, the command could
+        // block.
+    }
+    args_out
 }
 
-fn filter_package_and_workspace<T: AsRef<OsStr> + Debug>(
-    package_name: Option<&str>,
-    args_in: &[T],
-) -> Vec<OsString> {
-    let Some(package_name) = package_name.map(OsStr::new) else {
-        return args_in.iter().map(OsString::from).collect();
-    };
-    let mut args_out = Vec::new();
+fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args_in: &[T]) -> Vec<OsString> {
+    // smoelius: The following argument is prepended to the arguments passed: `--workspace`. (The
+    // reason for prepending this argument is to ensure it does not appear after `--` and is thus
+    // rejected by `libtest`.)
+    let mut args_out = vec![OsString::from("--workspace")];
+    let package_name = package_name.map(OsStr::new);
     let mut iter = args_in.iter().peekable();
     while let Some(arg) = iter.next() {
         let arg_as_ref = arg.as_ref();
-        if (arg_as_ref == OsStr::new("-p") || arg_as_ref == OsStr::new("--package"))
+        // smoelius: The following arguments are filtered out: `-p <containing-package>` and
+        // `--package <containing-package>`.
+        if let Some(package_name) = package_name
+            && (arg_as_ref == OsStr::new("-p") || arg_as_ref == OsStr::new("--package"))
             && iter.peek().map(AsRef::as_ref) == Some(package_name)
         {
             let _: Option<&T> = iter.next();
@@ -207,7 +214,83 @@ fn filter_package_and_workspace<T: AsRef<OsStr> + Debug>(
         if arg_as_ref == OsStr::new("--workspace") {
             continue;
         }
+        // smoelius: All arguments besides those covered by the previous bullet are forwarded.
         args_out.push(arg_as_ref.to_owned());
     }
     args_out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_and_check_forward_frozen_and_locked() {
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            let args_in_and_expected: &[(&[&str], &[&str])] = &[
+                (
+                    &["--frozen", "--release"],
+                    &[
+                        expected_subcommand,
+                        "-vv",
+                        "--offline",
+                        "--workspace",
+                        "--frozen",
+                    ],
+                ),
+                (
+                    &["--locked", "--release"],
+                    &[
+                        expected_subcommand,
+                        "-vv",
+                        "--offline",
+                        "--workspace",
+                        "--locked",
+                    ],
+                ),
+            ];
+            for (args_in, args_expected) in args_in_and_expected {
+                let command =
+                    build_cargo_command(Source::BuildScript, Some(&package), &subcommand, args_in)
+                        .unwrap();
+
+                let args_actual = command.get_args().collect::<Vec<_>>();
+                assert_eq!(
+                    args_expected.iter().map(OsStr::new).collect::<Vec<_>>(),
+                    args_actual,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_without_package_prepends_workspace() {
+        const ARGS_IN: &[&[&str]] = &[
+            &["--", "--nocapture"],
+            &["--workspace", "--", "--nocapture"],
+        ];
+        for args_in in ARGS_IN {
+            let command =
+                build_cargo_command(Source::Test, None, &CargoSubcommand::Test, args_in).unwrap();
+
+            let args = command.get_args().collect::<Vec<_>>();
+            assert_eq!(
+                [
+                    OsStr::new("test"),
+                    OsStr::new("--workspace"),
+                    OsStr::new("--"),
+                    OsStr::new("--nocapture"),
+                ],
+                args.as_slice(),
+            );
+        }
+    }
 }

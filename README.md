@@ -85,23 +85,22 @@ Furthermore, the following steps are required:
 
 ### `cargo build` and `cargo check`
 
-All arguments are filtered out; no arguments are forwarded. However, the commands are called with `-vv`, `--offline`, and `--workspace`:
+- The following arguments are prepended to the arguments passed: `-vv`, `--offline`, and `--workspace`.
+  - `-vv` aids in debugging.
+  - `--offline` avoids potential deadlocks (see [Known problem] below).
+  - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
-- `-vv` aids in debugging.
+- The following arguments are forwarded: `--frozen` and `--locked`.
 
-- `--offline` avoids potential deadlocks (see [Known problem] below).
-
-- `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
+- All arguments besides those covered by the previous bullet are filtered out, i.e., no other arguments are forwarded.
 
 ### `cargo test`
 
-The following modifications are made:
+- The following argument is prepended to the arguments passed: `--workspace`. (The reason for prepending this argument is to ensure it does not appear after `--` and is thus rejected by `libtest`.)
 
-- `-p <containing-package>` and `--package <containing-package>` are filtered out.
+- The following arguments are filtered out: `-p <containing-package>` and `--package <containing-package>`.
 
 - All arguments besides those covered by the previous bullet are forwarded.
-
-- `--workspace` is added to the arguments so that all packages in a nested workspace are tested, even if a nested workspace contains a root package.
 
 ### `cargo nested <subcommand>`
 
