@@ -87,7 +87,7 @@ Furthermore, the following steps are required:
 
 - The following arguments are prepended to the arguments passed: `-vv`, `--offline`, and `--workspace`.
   - `-vv` aids in debugging.
-  - `--offline` helps to avoid deadlocks (see [Known problem] below).
+  - `--offline` helps to avoid deadlocks (see [Potential deadlocks] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
 - The following arguments are forwarded: `--frozen` and `--locked`.
@@ -97,7 +97,7 @@ Furthermore, the following steps are required:
 ### `cargo test`
 
 - The following arguments are prepended to the arguments passed: `--offline` and `--workspace`. (The reason for prepending these arguments is to ensure they do not appear after `--` and are thus rejected by `libtest`.)
-  - `--offline` helps to avoid deadlocks (see [Known problem] below).
+  - `--offline` helps to avoid deadlocks (see [Potential deadlocks] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
 - The following arguments are filtered out: `-p <containing-package>` and `--package <containing-package>`.
@@ -110,7 +110,9 @@ All arguments are forwarded; no arguments are filtered out or added.
 
 A primary reason for this policy is that the arguments accepted by an arbitrary subcommand cannot be predicted. For example, a subcommand might not accept `--workspace`, or it might consider `-p` to mean something other than "package".
 
-## Known problem: potential deadlocks
+## Known problems
+
+### Potential deadlocks
 
 Nested Workspace has safeguards to avoid potential deadlocks.
 
@@ -124,7 +126,7 @@ To avoid this scenario, Nested Workspace always passes `--offline` in commands r
 
 Thus, in the scenario above, thread A would not hold a lock on the package cache, thereby avoiding the deadlock.
 
-## Git dependencies
+#### Git dependencies
 
 Using `cargo check --offline` with Git dependencies can result in errors like the following:
 
@@ -140,6 +142,22 @@ To avoid such errors, we recommend running `cargo nested fetch` beforehand, e.g.
 ```sh
 cargo nested fetch && cargo check --offline
 ```
+
+### Unintentional lockfile updates
+
+Running `cargo build` or `cargo check` on a containing package can cause unintentional updates to nested workspace lockfiles.
+
+Nested Workspace tries to adopt a policy consistent with Cargo. That is, just as Cargo allows a user to opt out of updating a lockfile by passing `--frozen` or `--locked`, Nested Workspace forwards `--frozen` and `--locked` to `cargo build` and `cargo check` commands run on nested workspaces.
+
+To adapt the direct `cargo build` and `cargo check` example from the [Usage] section, use [`Builder`]'s [`arg`] method to pass `--locked`:
+
+```rs
+fn main() {
+    nested_workspace::build().arg("--locked").unwrap();
+}
+```
+
+This causes Nested Workspace to run `cargo build` or `cargo check` on nested workspaces with `--locked`. If a nested workspace's lockfile needs to be updated, the command will fail rather than update the lockfile.
 
 ## Why would one need multiple workspaces?
 
@@ -157,7 +175,10 @@ Nested Workspace needs a _trigger_ to run a subcommand:
 For other subcommands, there is no obvious trigger. Hence, other subcommands must be run with `cargo nested <subcommand>`.
 
 [Dylint]: https://github.com/trailofbits/dylint
-[Known problem]: #known-problem-potential-deadlocks
+[Potential deadlocks]: #potential-deadlocks
+[Usage]: #usage
+[`Builder`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html
+[`arg`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html#method.arg
 [`gix-transport`]: https://github.com/GitoxideLabs/gitoxide/blob/8c353ea00c805604113a567d2f5157be94cc9f28/gix-transport/src/client/blocking_io/http/mod.rs#L25-L26
 [example]: ./example
 [feature unification]: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
