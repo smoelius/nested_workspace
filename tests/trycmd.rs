@@ -181,14 +181,14 @@ fn no_decimal_times() {
     }
 }
 
+fn enabled(key: &str) -> bool {
+    var_wc(key).is_ok_and(|value| value != "0")
+}
+
 fn touch(path: &Path) -> Result<()> {
     OpenOptions::new()
         .create(true)
         .append(true)
         .open_wc(path)
         .map(|_| ())
-}
-
-fn enabled(key: &str) -> bool {
-    var_wc(key).is_ok_and(|value| value != "0")
 }

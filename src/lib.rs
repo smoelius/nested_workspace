@@ -228,6 +228,33 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debu
     Ok(())
 }
 
+fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> {
+    let cargo_manifest_path = var_wc("CARGO_MANIFEST_PATH")?;
+    let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
+    let Some(package) = cargo_metadata
+        .packages
+        .iter()
+        .find(|package| package.manifest_path == cargo_manifest_path)
+    else {
+        bail!("failed to find package with manifest at `{cargo_manifest_path}`");
+    };
+    let Some(roots) = nested_workspace_roots_for_package(package)? else {
+        bail!("package at `{cargo_manifest_path}` has no `nested_workspace` metadata");
+    };
+    Ok(roots)
+}
+
+pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
+    let mut roots = Vec::new();
+    let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
+    for package in &cargo_metadata.packages {
+        if let Some(current_roots) = nested_workspace_roots_for_package(package)? {
+            roots.extend(current_roots);
+        }
+    }
+    Ok(roots)
+}
+
 fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     source: Source,
     subcommand: &CargoSubcommand,
@@ -261,33 +288,6 @@ fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
         }
     }
     Ok(())
-}
-
-fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> {
-    let cargo_manifest_path = var_wc("CARGO_MANIFEST_PATH")?;
-    let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
-    let Some(package) = cargo_metadata
-        .packages
-        .iter()
-        .find(|package| package.manifest_path == cargo_manifest_path)
-    else {
-        bail!("failed to find package with manifest at `{cargo_manifest_path}`");
-    };
-    let Some(roots) = nested_workspace_roots_for_package(package)? else {
-        bail!("package at `{cargo_manifest_path}` has no `nested_workspace` metadata");
-    };
-    Ok(roots)
-}
-
-pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
-    let mut roots = Vec::new();
-    let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
-    for package in &cargo_metadata.packages {
-        if let Some(current_roots) = nested_workspace_roots_for_package(package)? {
-            roots.extend(current_roots);
-        }
-    }
-    Ok(roots)
 }
 
 fn nested_workspace_roots_for_package(
