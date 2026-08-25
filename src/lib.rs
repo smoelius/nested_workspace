@@ -14,6 +14,7 @@ use std::{
     fs::OpenOptions,
     io::Write,
     path::{Path, PathBuf},
+    process::Command,
     time::SystemTime,
 };
 
@@ -165,23 +166,30 @@ impl Builder {
             .unwrap();
     }
 
-    fn run_parent_cargo_command_on_current_package_nested_workspace_roots(self) -> Result<()> {
+    fn run_parent_cargo_command_on_current_package_nested_workspace_roots(mut self) -> Result<()> {
         let (subcommand, subcommand_args) = parent_cargo_command()?;
 
-        let mut args = self.args;
-        args.extend(subcommand_args.iter().map(OsString::from));
+        self.args.extend(subcommand_args.iter().map(OsString::from));
 
         let roots = current_package_nested_workspace_roots()?;
-
-        run_cargo_subcommand_on_nested_workspace_roots(
-            self.source,
-            &subcommand,
-            &args,
-            None,
-            &roots,
-            false,
-        )?;
+        env_logger::try_init().unwrap_or_default();
+        if warn_if_no_nested_workspaces(&roots, None, false)? {
+            return Ok(());
+        }
+        for root in &roots {
+            let _delimiter = Delimiter::new(&root.path);
+            let command = self.cargo_command(Some(&root.package), &subcommand)?;
+            run_cargo_command(self.source, root, command)?;
+        }
         Ok(())
+    }
+
+    fn cargo_command(
+        &self,
+        package: Option<&PackageContext>,
+        subcommand: &CargoSubcommand,
+    ) -> Result<Command> {
+        build_cargo_command(self.source, package, subcommand, &self.args)
     }
 }
 
@@ -217,14 +225,19 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debu
     is_recursive_call: bool,
 ) -> Result<()> {
     let roots = all_nested_workspace_roots(dir)?;
-    run_cargo_subcommand_on_nested_workspace_roots(
-        Source::CargoNested,
-        subcommand,
-        args,
-        Some(dir),
-        &roots,
-        is_recursive_call,
-    )?;
+    env_logger::try_init().unwrap_or_default();
+    if warn_if_no_nested_workspaces(&roots, Some(dir), is_recursive_call)? {
+        return Ok(());
+    }
+    for root in &roots {
+        let _delimiter = Delimiter::new(&root.path);
+        let command =
+            build_cargo_command(Source::CargoNested, Some(&root.package), subcommand, args)?;
+        run_cargo_command(Source::CargoNested, root, command)?;
+        // smoelius: `cargo nested` is a special case. It must be run manually on each nested
+        // workspace root to ensure that _nested_-nested workspaces are handled.
+        run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, &root.path, true)?;
+    }
     Ok(())
 }
 
@@ -255,38 +268,30 @@ pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>
     Ok(roots)
 }
 
-fn run_cargo_subcommand_on_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
-    source: Source,
-    subcommand: &CargoSubcommand,
-    args: &[T],
-    dir: Option<&Path>,
+fn warn_if_no_nested_workspaces(
     roots: &[NestedWorkspaceRoot],
+    dir: Option<&Path>,
     is_recursive_call: bool,
+) -> Result<bool> {
+    if roots.is_empty() && !is_recursive_call {
+        let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
+        writeln!(
+            std::io::stderr(),
+            "Warning: found no nested workspaces{in_dir}",
+        )?;
+    }
+    Ok(roots.is_empty())
+}
+
+fn run_cargo_command(
+    source: Source,
+    root: &NestedWorkspaceRoot,
+    mut command: Command,
 ) -> Result<()> {
-    env_logger::try_init().unwrap_or_default();
-    if roots.is_empty() {
-        if !is_recursive_call {
-            let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
-            writeln!(
-                std::io::stderr(),
-                "Warning: found no nested workspaces{in_dir}",
-            )?;
-        }
-        return Ok(());
-    }
-    for root in roots {
-        let _delimiter = Delimiter::new(&root.path);
-        let mut command = build_cargo_command(source, Some(&root.package), subcommand, args)?;
-        command.current_dir(&root.path);
-        debug!("{source}: {command:?}");
-        let status = command.status_wc()?;
-        ensure!(status.success(), "command failed: {command:?}");
-        // smoelius: `cargo nested` is a special case. It must be run manually on each nested
-        // workspace root to ensure that _nested_-nested workspaces are handled.
-        if matches!(source, Source::CargoNested) {
-            run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, &root.path, true)?;
-        }
-    }
+    command.current_dir(&root.path);
+    debug!("{source}: {command:?}");
+    let status = command.status_wc()?;
+    ensure!(status.success(), "command failed: {command:?}");
     Ok(())
 }
 
