@@ -8,6 +8,7 @@ use elaborate::std::{
 };
 use regex::Regex;
 use std::{
+    collections::BTreeSet,
     env::split_paths,
     ffi::{OsStr, OsString},
     fs::OpenOptions,
@@ -64,18 +65,41 @@ fn prepend_to_paths(path: PathBuf) -> OsString {
 
 #[test]
 fn completeness() {
+    const EXTENSIONS: [&str; 3] = ["stderr", "stdout", "toml"];
+
+    // Seed from fixtures so a fixture with no cases is reported, and supplement with case files so
+    // dependent-entry cases such as `cycle__dependent`, which do not have corresponding top-level
+    // fixtures, are also checked.
+    let mut file_stems = read_dir_wc("fixtures")
+        .unwrap()
+        .map(|result| result.unwrap().file_name())
+        .collect::<BTreeSet<_>>();
+    for (subdir, _) in SUBDIR_ARGS {
+        if subdir == "before" || subdir == "after" {
+            continue;
+        }
+        let path = Path::new("tests/trycmd").join(subdir);
+        for result in read_dir_wc(path).unwrap() {
+            let entry = result.unwrap();
+            if EXTENSIONS
+                .iter()
+                .any(|extension| entry.extension().as_deref() == Some(OsStr::new(extension)))
+            {
+                file_stems.insert(entry.path().file_stem_wc().unwrap().to_owned());
+            }
+        }
+    }
+
     let mut missing = Vec::new();
-    for result in read_dir_wc("fixtures").unwrap() {
-        let entry = result.unwrap();
-        let filename = entry.file_name();
+    for file_stem in file_stems {
         for (subdir, _) in SUBDIR_ARGS {
             if subdir == "before" || subdir == "after" {
                 continue;
             }
-            for extension in ["stderr", "stdout", "toml"] {
+            for extension in EXTENSIONS {
                 let path = Path::new("tests/trycmd")
                     .join(subdir)
-                    .join(&filename)
+                    .join(&file_stem)
                     .with_extension(extension);
                 if !path.try_exists_wc().unwrap() {
                     let path = absolute_wc(path).unwrap();
