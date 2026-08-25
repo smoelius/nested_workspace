@@ -275,6 +275,34 @@ mod tests {
     }
 
     #[test]
+    fn build_and_check_forward_locked_from_builder() {
+        let builder = crate::build().arg("--locked");
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            let command = builder.cargo_command(Some(&package), &subcommand).unwrap();
+
+            let args_actual = command.get_args().collect::<Vec<_>>();
+            assert_eq!(
+                [
+                    OsStr::new(expected_subcommand),
+                    OsStr::new("-vv"),
+                    OsStr::new("--offline"),
+                    OsStr::new("--workspace"),
+                    OsStr::new("--locked"),
+                ],
+                args_actual.as_slice(),
+            );
+        }
+    }
+
+    #[test]
     fn test_without_package_prepends_offline_and_workspace() {
         const ARGS_IN: &[&[&str]] = &[
             &["--", "--nocapture"],
