@@ -25,7 +25,7 @@ sysinfo = "0.39"
 [dev-dependencies]
 assert_cmd = "2.2"
 regex = "1.13"
-similar-asserts = "2.0"
+supply_chain = "0.1"
 tempfile = "3.27"
 toml = "1.1"
 trycmd = "1.2"
