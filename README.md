@@ -48,7 +48,16 @@ Furthermore, the following steps are required:
    A root can be either a path string or a table containing `path` and `dependent`. If a nested
    workspace depends on the containing package, set `dependent = true` so that reentering the
    containing package's build script exits silently instead of failing the build with a
-   workspace-cycle error. The default is `false`.
+   workspace-cycle error. A dependent root is skipped if its build directory contains the running
+   build script's `OUT_DIR`, which avoids recursively invoking Cargo on a build directory locked by
+   the parent process. The same situation is reported as an error for a root not marked as a
+   dependent. The default is `false`.
+
+   This build-directory conflict can also occur without a dependency cycle when the containing and
+   nested workspaces are configured to share a build directory. If the root is not dependent,
+   configure the nested workspace to use a distinct build directory. Check `CARGO_TARGET_DIR` and
+   Cargo's `build.target-dir` and `build.build-dir` configuration settings for possible sources of
+   sharing.
 
 2. To enable direct support for `cargo build` and `cargo check`, add `nested_workspace` as `build-dependency` to the containing package's Cargo.toml:
 

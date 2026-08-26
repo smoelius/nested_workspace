@@ -1,0 +1,12 @@
+args = ["build", "-vv", "--offline"]
+
+[bin]
+name = "cargo"
+
+# Isolate the dependent-entry cases from the containing-package cases while preserving target
+# reuse across `check`, `build`, and `test`.
+[env.add]
+CARGO_TARGET_DIR = "target/cycle_with_dependent__dependent"
+
+[fs]
+cwd = "../../../fixtures/cycle_with_dependent/dependent"

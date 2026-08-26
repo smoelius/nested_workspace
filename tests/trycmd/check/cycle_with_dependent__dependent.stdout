@@ -1,0 +1,3 @@
+...
+[cycle_with_dependent 0.1.0] cargo::rerun-if-changed=[CWD]/target/cycle_with_dependent__dependent/debug/build/cycle_with_dependent-[..]/out/[PUT].timestamp
+[cycle_with_dependent 0.1.0] cargo::warning=skipping nested workspace `[CWD]` because its build directory contains the running build script's `OUT_DIR` and it is marked as dependent

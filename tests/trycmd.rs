@@ -2,6 +2,7 @@ use anyhow::Result;
 use dir_entry_ext::DirEntryExt;
 use elaborate::std::{
     env::{join_paths_wc, var_os_wc, var_wc},
+    ffi::OsStrContext,
     fs::{OpenOptionsContext, read_dir_wc, read_to_string_wc},
     path::{PathContext, absolute_wc},
     process::CommandContext,
@@ -96,6 +97,13 @@ fn completeness() {
             if subdir == "before" || subdir == "after" {
                 continue;
             }
+            // Dependent-entry cases exercise build-script behavior and do not have a meaningful
+            // `cargo nested clean` counterpart. Running both entry points would also race while
+            // cleaning the same build directory.
+            if subdir == "nested_clean" && containing_and_dependent_file_stems(&file_stem).is_some()
+            {
+                continue;
+            }
             for extension in EXTENSIONS {
                 let path = Path::new("tests/trycmd")
                     .join(subdir)
@@ -184,11 +192,25 @@ fn correctness() {
                 .map(Path::new)
                 .unwrap();
 
-            let fixture = cwd.file_name_wc().unwrap();
+            let fixture_suffix = containing_and_dependent_file_stems(file_stem).map_or_else(
+                || PathBuf::from(file_stem),
+                |(containing_file_stem, dependent_file_stem)| {
+                    Path::new(containing_file_stem).join(dependent_file_stem)
+                },
+            );
 
-            assert_eq!(file_stem, fixture);
+            assert!(
+                cwd.ends_with(&fixture_suffix),
+                "`{}` does not end with `{}`",
+                cwd.display(),
+                fixture_suffix.display()
+            );
         }
     }
+}
+
+fn containing_and_dependent_file_stems(file_stem: &OsStr) -> Option<(&str, &str)> {
+    file_stem.to_str_wc().unwrap().rsplit_once("__")
 }
 
 #[test]

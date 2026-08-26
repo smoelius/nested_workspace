@@ -12,7 +12,7 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
     fs::OpenOptions,
-    io::Write,
+    io::{ErrorKind, Write, stderr},
     path::{Path, PathBuf},
     process::Command,
     time::SystemTime,
@@ -177,6 +177,48 @@ impl Builder {
             return Ok(());
         }
         for root in &roots {
+            if matches!(self.source, Source::BuildScript)
+                && nested_workspace_uses_current_build_directory(&root.path)?
+            {
+                // A dependent nested workspace builds the containing package as a dependency. Do
+                // not launch Cargo on that nested workspace if its build directory contains the
+                // running build script's `OUT_DIR`: the parent Cargo process holds the build
+                // directory lock, so the child Cargo process would wait for the parent while the
+                // parent waits for this build script.
+                //
+                // `nested_workspace_uses_current_build_directory` considers only the Cargo
+                // invocation running this build script. In a multilayer invocation, an inner
+                // nested workspace could still reuse a build directory locked by an earlier
+                // ancestor Cargo invocation if the intermediate layers use different build
+                // directories. For example, Cargo A could lock build directory `a`, invoke Cargo
+                // B using build directory `b`, and Cargo B's build script could invoke Cargo C
+                // using build directory `a`. Cargo B's `OUT_DIR` is under `b`, so
+                // `nested_workspace_uses_current_build_directory` would not detect the lock held
+                // by Cargo A.
+                //
+                // Sharing a build directory does not prove that the parent Cargo invocation is
+                // already processing this root. Cargo does not expose enough information to
+                // distinguish that case from unrelated workspaces sharing a build directory, so
+                // skip dependent roots to avoid deadlock and emit a warning because the requested
+                // operation may not otherwise be performed.
+                if root.dependent() {
+                    println!(
+                        "cargo::warning=skipping nested workspace `{}` because its build \
+                         directory contains the running build script's `OUT_DIR` and it is marked \
+                         as dependent",
+                        root.path.display(),
+                    );
+                    continue;
+                }
+                bail!(
+                    "cannot run on nested workspace `{}` because its build directory contains the \
+                     running build script's `OUT_DIR`.\nInvoking Cargo would deadlock waiting for \
+                     the current Cargo invocation's build directory lock.\nConfigure the nested \
+                     workspace to use a distinct build directory (check `CARGO_TARGET_DIR`, \
+                     `build.target-dir`, and `build.build-dir`).",
+                    root.path.display(),
+                );
+            }
             let _delimiter = Delimiter::new(&root.path);
             let command = self.cargo_command(Some(&root.package), &subcommand)?;
             run_cargo_command(self.source, root, command)?;
@@ -191,6 +233,20 @@ impl Builder {
     ) -> Result<Command> {
         build_cargo_command(self.source, package, subcommand, &self.args)
     }
+}
+
+fn nested_workspace_uses_current_build_directory(root: &Path) -> Result<bool> {
+    let out_dir = dunce::canonicalize(var_wc("OUT_DIR")?)?;
+    let cargo_metadata = MetadataCommand::new().current_dir(root).no_deps().exec()?;
+    let build_directory = cargo_metadata
+        .build_directory
+        .unwrap_or(cargo_metadata.target_directory);
+    let build_directory = match dunce::canonicalize(build_directory) {
+        Ok(build_directory) => build_directory,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    Ok(out_dir.starts_with(build_directory))
 }
 
 const TIMESTAMP_CONTENTS: &str =
@@ -275,10 +331,7 @@ fn warn_if_no_nested_workspaces(
 ) -> Result<bool> {
     if roots.is_empty() && !is_recursive_call {
         let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
-        writeln!(
-            std::io::stderr(),
-            "Warning: found no nested workspaces{in_dir}",
-        )?;
+        writeln!(stderr(), "Warning: found no nested workspaces{in_dir}")?;
     }
     Ok(roots.is_empty())
 }
@@ -319,7 +372,7 @@ fn nested_workspace_roots_for_package(
             let path = result?;
             if !validate_root(&path)? {
                 writeln!(
-                    std::io::stderr(),
+                    stderr(),
                     "Warning: skipping `{}` as it does not contain a workspace",
                     path.display(),
                 )?;
