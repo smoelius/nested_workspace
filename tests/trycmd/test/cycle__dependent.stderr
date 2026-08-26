@@ -1,0 +1,16 @@
+...
+   Compiling cycle v0.1.0 ([..]/[PUT]/fixtures/cycle)
+error: failed to run custom build command for `cycle v0.1.0 ([..]/[PUT]/fixtures/cycle)`
+
+Caused by:
+  process didn't exit successfully: `[CWD]/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
+  --- stdout
+  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/[PUT].timestamp
+
+  --- stderr
+
+  thread 'main' ([..]) panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:
+  called `Result::unwrap()` on an `Err` value: cannot run on nested workspace `[CWD]` because its build directory contains the running build script's `OUT_DIR`.
+  Invoking Cargo would deadlock waiting for the current Cargo invocation's build directory lock.
+  Configure the nested workspace to use a distinct build directory (check `CARGO_TARGET_DIR`, `build.target-dir`, and `build.build-dir`).
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

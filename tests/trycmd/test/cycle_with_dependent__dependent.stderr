@@ -1,0 +1,6 @@
+...
+   Compiling cycle_with_dependent v0.1.0 ([..]/[PUT]/fixtures/cycle_with_dependent)
+warning: cycle_with_dependent@0.1.0: skipping nested workspace `[CWD]` because its build directory contains the running build script's `OUT_DIR` and it is marked as dependent
+   Compiling dependent v0.1.0 ([CWD])
+    Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
+     Running unittests src/lib.rs (target/cycle_with_dependent__dependent/debug/deps/dependent-[..])
