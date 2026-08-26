@@ -65,6 +65,10 @@ jobs:
         run: cargo build --workspace --all-targets
 
       - name: Test all but example
+        env:
+          # Limit `trycmd` concurrency on Windows. Its cases invoke Cargo in parallel, which can
+          # otherwise cause enough contention to trigger libtest's 60-second status message.
+          RAYON_NUM_THREADS: ${{ runner.os == 'Windows' && '1' || '0' }}
         run: cargo test --workspace --exclude nested_workspace_example --config "target.'cfg(all())'.runner = 'unset'" -- --nocapture
 
       - name: Test example
