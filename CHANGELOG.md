@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1
+
+- Expand documentation with "Unintentional lockfile updates" section ([3452e52](https://github.com/smoelius/nested_workspace/commit/3452e526215492d68b82b93e88f3ac7093923e0d))
+- Avoid build directory deadlocks for dependent workspaces ([11d8db0](https://github.com/smoelius/nested_workspace/commit/11d8db01967b881519f42f5061567b369d85d39e))
+
 ## 2.0.0
 
 - BREAKING: Rework argument handling. Specifically, forward `--frozen` and `--locked` when running `cargo build` or `cargo check` on a nested workspace. Also, fix a bug that caused `--workspace` to be passed twice to `cargo test` when the name of a nested workspace's containing package could not be determined. ([55d9509](https://github.com/smoelius/nested_workspace/commit/55d95095b9912a5af92164e11c531cb73a3f525a))
