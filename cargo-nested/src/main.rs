@@ -13,9 +13,11 @@ const USAGE: &str = concat!(
     "  -h, --help     Print help\n",
     "  -V, --version  Print version\n",
     "\n",
-    "If a Cargo SUBCOMMAND is passed, it is run on the current package and all nested workspaces.\n",
+    "If a Cargo SUBCOMMAND is passed, it is run on the current package and all nested \
+     workspaces.\n",
     "\n",
-    "For example, the following command runs `cargo clean` on the current package and all nested workspaces:\n",
+    "For example, the following command runs `cargo clean` on the current package and all nested \
+     workspaces:\n",
     "\n",
     "    cargo nested clean"
 );
