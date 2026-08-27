@@ -20,8 +20,10 @@ static CARGO_NESTED: LazyLock<PathBuf> = LazyLock::new(|| {
         .into_std_path_buf()
 });
 
+/// To understand this test's purpose, see the comment preceding the call to
+/// [`nested_workspace::force_rerun`] in [`nested_workspace::Builder::unwrap`].
 #[test]
-fn build_script_always_runs() {
+fn check_runs_build_script_then_build_runs_build_script() {
     let mut failures = Vec::new();
     for result in WalkDir::new(Path::new(env!("CARGO_MANIFEST_DIR"))) {
         let entry = result.unwrap();
