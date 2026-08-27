@@ -1,4 +1,4 @@
-args = ["test", "--workspace"]
+args = ["test"]
 
 status = "failed"
 

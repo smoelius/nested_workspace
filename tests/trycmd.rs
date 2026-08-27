@@ -25,7 +25,7 @@ const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
     ("nested_clean", &["nested", "clean"]),
     ("check", &["check", "-vv", "--offline"]),
     ("build", &["build", "-vv", "--offline"]),
-    ("test", &["test", "--workspace"]),
+    ("test", &["test"]),
     ("after", &[]),
 ];
 
