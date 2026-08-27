@@ -17,11 +17,32 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  determine-environments:
+    runs-on: ubuntu-latest
+
+    outputs:
+      environments: ${{ steps.environments.outputs.environments }}
+
+    steps:
+      # smoelius: The Windows job runs more slowly than the Ubuntu and macOS jobs. So run it only
+      # when the triggering event is `schedule` or `workflow_dispatch`. See also the comment
+      # preceding `RAYON_NUM_THREADS` below.
+      - name: Determine environments
+        id: environments
+        run: |
+          if [[ '${{ github.event_name }}' == 'schedule' || '${{ github.event_name }}' == 'workflow_dispatch' ]]; then
+            echo 'environments=["ubuntu-latest", "macos-latest", "windows-latest"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'environments=["ubuntu-latest", "macos-latest"]' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
+    needs: [determine-environments]
+
     strategy:
       fail-fast: false
       matrix:
-        environment: [ubuntu-latest, macos-latest, windows-latest]
+        environment: ${{ fromJSON(needs.determine-environments.outputs.environments) }}
 
     runs-on: ${{ matrix.environment }}
 
@@ -75,7 +96,7 @@ jobs:
         run: cargo test -p nested_workspace_example -- --nocapture
 
   all-checks:
-    needs: [test]
+    needs: [determine-environments, test]
 
     if: ${{ always() }}
 
