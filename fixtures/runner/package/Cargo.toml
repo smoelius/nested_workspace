@@ -8,4 +8,3 @@ publish = false
 doctest = false
 
 [workspace]
-resolver = "3"

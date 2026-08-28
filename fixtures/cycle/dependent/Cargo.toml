@@ -11,4 +11,3 @@ cycle = { path = ".." }
 doctest = false
 
 [workspace]
-resolver = "3"
