@@ -205,6 +205,41 @@ fn test_correctness() {
                 cwd.display(),
                 fixture_suffix.display()
             );
+
+            // A successful `build` should compile the fixture's root package. Assert that the
+            // `.stderr` file pins down the `Compiling` line for it, rather than letting it be
+            // swallowed by a `...` wildcard.
+            let status_failed =
+                table.get("status").and_then(|value| value.as_str()) == Some("failed");
+            if subdir == "build" && file_stem != "runner" && !status_failed {
+                let expected_prefix = containing_and_dependent_file_stems(file_stem).map_or_else(
+                    || {
+                        format!(
+                            r"...
+   Compiling {} v0.1.0 ([CWD])
+",
+                            file_stem.to_str_wc().unwrap()
+                        )
+                    },
+                    |(containing, dependent)| {
+                        format!(
+                            r"...
+   Compiling {containing} v0.1.0 ([..]/[PUT]/fixtures/{containing})
+...
+   Compiling {dependent} v0.1.0 ([CWD])
+"
+                        )
+                    },
+                );
+                let stderr_path = path.with_extension("stderr");
+                let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
+                assert!(
+                    stderr_contents.starts_with(&expected_prefix),
+                    "`{}` does not start with `{}`",
+                    stderr_path.display(),
+                    expected_prefix
+                );
+            }
         }
     }
 }
