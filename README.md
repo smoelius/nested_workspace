@@ -90,6 +90,25 @@ Furthermore, the following steps are required:
    }
    ```
 
+## Environment variable handling
+
+Whenever a command is run on a nested workspace, the following environment variables are removed:
+
+- `CARGO`
+- `RUSTC`
+- `RUSTUP_TOOLCHAIN`
+
+The reason for this is that nested workspaces should be allowed to use different toolchains than their containing packages (see [Why would one need multiple workspaces?] below). Failing to clear these environment variables could conflict with that goal.
+
+At present, the `RUSTC_WORKSPACE_WRAPPER` environment variable is _not_ cleared. This has the following implications:
+
+- It allows Clippy to run on nested workspaces when run on a containing package.
+- Its presence can be used to avoid running Nested Workspace under Clippy, Dylint, or any other workspace compiler wrapper.
+
+More information is given under [Other uses of `cargo check`] below.
+
+We may revisit the decision to not clear `RUSTC_WORKSPACE_WRAPPER` in the future, however.
+
 ## Argument handling
 
 ### `cargo build` and `cargo check`
@@ -168,6 +187,24 @@ fn main() {
 
 This causes Nested Workspace to run `cargo build` or `cargo check` on nested workspaces with `--locked`. If a nested workspace's lockfile needs to be updated, the command will fail rather than update the lockfile.
 
+### Other uses of `cargo check`
+
+Tools like [Clippy] and [Dylint] run `cargo check` with certain environment variables set. At present, running Clippy on a containing package should also run Clippy on nested workspaces, provided the containing package and nested workspaces select compatible toolchains. We [test this] using the default toolchain for both workspaces.
+
+However, running Clippy with a non-default toolchain could cause it to fail on a nested workspace. (Attempting to run Dylint on nested workspaces fails for similar reasons.) Thus, one might want to avoid running Clippy or Dylint on a nested workspace.
+
+Both Clippy and Dylint set the `RUSTC_WORKSPACE_WRAPPER` environment variable. At present, this environment variable is [_not_ cleared] by Nested Workspace. Thus, its presence can be used to avoid running Nested Workspace under Clippy, Dylint, or any other workspace compiler wrapper. To make this concrete, the direct `cargo build` and `cargo check` example from the [Usage] section can be adapted as follows:
+
+```rs
+fn main() {
+    if std::env::var_os("RUSTC_WORKSPACE_WRAPPER").is_none() {
+        nested_workspace::build().unwrap();
+    }
+}
+```
+
+In this way, `cargo build` and `cargo check` should run on a containing package's nested workspaces when no workspace compiler wrapper is active.
+
 ## Why would one need multiple workspaces?
 
 - **Multiple toolchains:** Cargo builds all targets in workspace [with the same toolchain]. If a project needs multiple toolchains, then multiple workspaces are needed. ([Dylint] is an example of such a project.)
@@ -183,12 +220,17 @@ Nested Workspace needs a _trigger_ to run a subcommand:
 
 For other subcommands, there is no obvious trigger. Hence, other subcommands must be run with `cargo nested <subcommand>`.
 
+[Clippy]: https://github.com/rust-lang/rust-clippy
 [Dylint]: https://github.com/trailofbits/dylint
+[Other uses of `cargo check`]: #other-uses-of-cargo-check
 [Potential deadlocks]: #potential-deadlocks
 [Usage]: #usage
+[Why would one need multiple workspaces?]: #why-would-one-need-multiple-workspaces
+[_not_ cleared]: #environment-variable-handling
 [`Builder`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html
 [`arg`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html#method.arg
 [`gix-transport`]: https://github.com/GitoxideLabs/gitoxide/blob/8c353ea00c805604113a567d2f5157be94cc9f28/gix-transport/src/client/blocking_io/http/mod.rs#L25-L26
 [example]: ./example
 [feature unification]: https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+[test this]: tests/trycmd/after/clippy.toml
 [with the same toolchain]: https://github.com/rust-lang/rustup/issues/1399#issuecomment-383376082
