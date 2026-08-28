@@ -11,4 +11,3 @@ cycle_with_dependent = { path = ".." }
 doctest = false
 
 [workspace]
-resolver = "3"

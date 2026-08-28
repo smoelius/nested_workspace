@@ -65,7 +65,7 @@ fn prepend_to_paths(path: PathBuf) -> OsString {
 }
 
 #[test]
-fn completeness() {
+fn test_completeness() {
     const EXTENSIONS: [&str; 3] = ["stderr", "stdout", "toml"];
 
     // Seed from fixtures so a fixture with no cases is reported, and supplement with case files so
@@ -130,7 +130,7 @@ fn completeness() {
 }
 
 #[test]
-fn correctness() {
+fn test_correctness() {
     for (subdir, args_expected) in SUBDIR_ARGS {
         if subdir == "before" || subdir == "after" {
             continue;
@@ -205,6 +205,53 @@ fn correctness() {
                 cwd.display(),
                 fixture_suffix.display()
             );
+        }
+    }
+}
+
+#[test]
+fn fixture_correctness() {
+    for result in WalkDir::new("fixtures") {
+        let entry = result.unwrap();
+        if entry.file_name() != OsStr::new("Cargo.toml") {
+            continue;
+        }
+        let path = entry.path();
+        let contents = read_to_string_wc(path).unwrap();
+        let table = toml::from_str::<toml::Table>(&contents).unwrap();
+
+        let has_package = table.get("package").and_then(|value| value.as_table());
+
+        if let Some(package) = has_package {
+            assert_eq!(
+                Some("2024"),
+                package.get("edition").and_then(|value| value.as_str()),
+                "`{}` does not have `edition = \"2024\"`",
+                path.display()
+            );
+        }
+
+        // A package's `edition` determines its default resolver version, so a manifest with a
+        // `[package]` table should not set `resolver`. But a virtual manifest (no `[package]`
+        // table) does not derive a default resolver from its members' editions. So it must set
+        // `resolver` explicitly to avoid a warning from Cargo.
+        if let Some(workspace) = table.get("workspace").and_then(|value| value.as_table()) {
+            let resolver = workspace.get("resolver").and_then(|value| value.as_str());
+            if has_package.is_some() {
+                assert_eq!(
+                    None,
+                    resolver,
+                    "`{}` has a redundant `resolver` key",
+                    path.display()
+                );
+            } else {
+                assert_eq!(
+                    Some("3"),
+                    resolver,
+                    "`{}` does not have `resolver = \"3\"`",
+                    path.display()
+                );
+            }
         }
     }
 }
