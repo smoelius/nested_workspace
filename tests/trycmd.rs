@@ -206,57 +206,70 @@ fn test_correctness() {
                 fixture_suffix.display()
             );
 
-            // Cargo can emit incidental messages, such as lock waits, after the marker for a
-            // nested command. Require a wildcard there so such messages do not make the snapshot
-            // flaky.
-            if matches!(subdir, "check" | "build" | "test") {
-                let stderr_path = path.with_extension("stderr");
-                let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
-                let mut lines = stderr_contents.lines();
-                while let Some(line) = lines.next() {
-                    if line.starts_with("<<< ") {
-                        assert_eq!(
-                            Some("..."),
-                            lines.next(),
-                            "`{}` does not have `...` after `{line}`",
-                            stderr_path.display()
-                        );
-                    }
-                }
-            }
+            assert_nested_command_wildcards(subdir, &path);
+            assert_build_compiling_prefix(subdir, file_stem, &path, &table);
+        }
+    }
+}
 
-            // A successful `build` should compile the fixture's root package. Assert that the
-            // `.stderr` file pins down the `Compiling` line for it, rather than letting it be
-            // swallowed by a `...` wildcard.
-            let status_failed =
-                table.get("status").and_then(|value| value.as_str()) == Some("failed");
-            if subdir == "build" && file_stem != "runner" && !status_failed {
-                let expected_prefix = containing_and_dependent_file_stems(file_stem).map_or_else(
-                    || {
-                        format!(
-                            r"...
+/// A successful `build` should compile the fixture's root package. Assert that the `.stderr` file
+/// pins down the `Compiling` line for it, rather than letting it be swallowed by a `...` wildcard.
+fn assert_build_compiling_prefix(
+    subdir: &str,
+    file_stem: &OsStr,
+    path: &Path,
+    table: &toml::Table,
+) {
+    let status_failed = table.get("status").and_then(|value| value.as_str()) == Some("failed");
+    if subdir == "build" && file_stem != "runner" && !status_failed {
+        let expected_prefix = containing_and_dependent_file_stems(file_stem).map_or_else(
+            || {
+                format!(
+                    r"...
    Compiling {} v0.1.0 ([CWD])
 ",
-                            file_stem.to_str_wc().unwrap()
-                        )
-                    },
-                    |(containing, dependent)| {
-                        format!(
-                            r"...
+                    file_stem.to_str_wc().unwrap()
+                )
+            },
+            |(containing, dependent)| {
+                format!(
+                    r"...
    Compiling {containing} v0.1.0 ([..]/[PUT]/fixtures/{containing})
 ...
    Compiling {dependent} v0.1.0 ([CWD])
 "
-                        )
-                    },
-                );
-                let stderr_path = path.with_extension("stderr");
-                let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
-                assert!(
-                    stderr_contents.starts_with(&expected_prefix),
-                    "`{}` does not start with `{}`",
-                    stderr_path.display(),
-                    expected_prefix
+                )
+            },
+        );
+        let stderr_path = path.with_extension("stderr");
+        let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
+        assert!(
+            stderr_contents.starts_with(&expected_prefix),
+            "`{}` does not start with `{}`",
+            stderr_path.display(),
+            expected_prefix
+        );
+    }
+}
+
+fn containing_and_dependent_file_stems(file_stem: &OsStr) -> Option<(&str, &str)> {
+    file_stem.to_str_wc().unwrap().rsplit_once("__")
+}
+
+/// Cargo can emit incidental messages, such as lock waits, after the marker for a nested command.
+/// Require a wildcard there so such messages do not make the snapshot flaky.
+fn assert_nested_command_wildcards(subdir: &str, path: &Path) {
+    if matches!(subdir, "check" | "build" | "test") {
+        let stderr_path = path.with_extension("stderr");
+        let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
+        let mut lines = stderr_contents.lines();
+        while let Some(line) = lines.next() {
+            if line.starts_with("<<< ") {
+                assert_eq!(
+                    Some("..."),
+                    lines.next(),
+                    "`{}` does not have `...` after `{line}`",
+                    stderr_path.display()
                 );
             }
         }
@@ -308,10 +321,6 @@ fn fixture_correctness() {
             }
         }
     }
-}
-
-fn containing_and_dependent_file_stems(file_stem: &OsStr) -> Option<(&str, &str)> {
-    file_stem.to_str_wc().unwrap().rsplit_once("__")
 }
 
 #[test]
