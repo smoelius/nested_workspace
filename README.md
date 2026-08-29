@@ -92,7 +92,7 @@ Furthermore, the following steps are required:
 
 ## Environment variable handling
 
-Whenever a command is run on a nested workspace, the following environment variables are removed:
+Whenever a command is run on a nested workspace, the following environment variables are cleared:
 
 - `CARGO`
 - `RUSTC`
