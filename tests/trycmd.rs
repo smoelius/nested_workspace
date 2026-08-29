@@ -206,6 +206,25 @@ fn test_correctness() {
                 fixture_suffix.display()
             );
 
+            // Cargo can emit incidental messages, such as lock waits, after the marker for a
+            // nested command. Require a wildcard there so such messages do not make the snapshot
+            // flaky.
+            if matches!(subdir, "check" | "build" | "test") {
+                let stderr_path = path.with_extension("stderr");
+                let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
+                let mut lines = stderr_contents.lines();
+                while let Some(line) = lines.next() {
+                    if line.starts_with("<<< ") {
+                        assert_eq!(
+                            Some("..."),
+                            lines.next(),
+                            "`{}` does not have `...` after `{line}`",
+                            stderr_path.display()
+                        );
+                    }
+                }
+            }
+
             // A successful `build` should compile the fixture's root package. Assert that the
             // `.stderr` file pins down the `Compiling` line for it, rather than letting it be
             // swallowed by a `...` wildcard.
