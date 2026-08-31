@@ -10,7 +10,6 @@ use log::debug;
 use serde::Deserialize;
 use std::{
     ffi::{OsStr, OsString},
-    fmt::Debug,
     fs::OpenOptions,
     io::{ErrorKind, Write, stderr},
     path::{Path, PathBuf},
@@ -276,7 +275,7 @@ fn touch(path: &Path) -> Result<()> {
 }
 
 #[doc(hidden)]
-pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
+pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
     subcommand: &CargoSubcommand,
     args: &[T],
     dir: &Path,

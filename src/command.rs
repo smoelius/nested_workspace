@@ -123,7 +123,7 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
 }
 
 #[doc(hidden)]
-pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
+pub fn build_cargo_command<T: AsRef<OsStr>>(
     source: Source,
     package: Option<&PackageContext>,
     subcommand: &CargoSubcommand,
