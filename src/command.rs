@@ -14,6 +14,7 @@ use std::{
 };
 use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System, UpdateKind};
 
+#[doc(hidden)]
 pub enum CargoSubcommand {
     Build,
     Check,
@@ -82,6 +83,7 @@ fn parent_command(id: u32) -> Result<(u32, &'static [OsString])> {
     Ok((parent_id.as_u32(), cmd))
 }
 
+#[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
     args: &[T],
@@ -100,6 +102,7 @@ pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
     parse_cargo_subcommand(&args[1..]).map(Some)
 }
 
+#[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
     args: &[T],
@@ -119,6 +122,7 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
     Ok((subcommand, &args[1..]))
 }
 
+#[doc(hidden)]
 pub fn build_cargo_command<T: AsRef<OsStr> + Debug>(
     source: Source,
     package: Option<&PackageContext>,

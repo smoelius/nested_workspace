@@ -21,11 +21,10 @@ use std::{
 mod cargo_nested;
 
 mod command;
-use command::parent_cargo_command;
 pub use command::{
-    CargoSubcommand, PackageContext, build_cargo_command, parse_cargo_command,
-    parse_cargo_subcommand,
+    CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
 };
+use command::{PackageContext, parent_cargo_command};
 
 mod reentrancy_guard;
 use reentrancy_guard::check_reentrancy_guard;
@@ -64,6 +63,7 @@ impl MetadataRoot {
     }
 }
 
+#[doc(hidden)]
 pub struct NestedWorkspaceRoot {
     path: PathBuf,
     package: PackageContext,
@@ -81,6 +81,7 @@ impl NestedWorkspaceRoot {
     }
 }
 
+#[doc(hidden)]
 #[derive(Clone, Copy)]
 pub enum Source {
     BuildScript,
@@ -274,6 +275,7 @@ fn touch(path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[doc(hidden)]
 pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr> + Debug>(
     subcommand: &CargoSubcommand,
     args: &[T],
@@ -313,6 +315,7 @@ fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> 
     Ok(roots)
 }
 
+#[doc(hidden)]
 pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
     let mut roots = Vec::new();
     let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
