@@ -1,7 +1,8 @@
 use anyhow::{Result, bail, ensure};
 use nested_workspace::{
-    CargoSubcommand, Source, all_nested_workspace_roots, build_cargo_command, parse_cargo_command,
-    parse_cargo_subcommand, run_cargo_subcommand_on_all_nested_workspace_roots,
+    Args, CargoSubcommand, Source, all_nested_workspace_roots, build_cargo_command,
+    parse_cargo_command, parse_cargo_subcommand,
+    run_cargo_subcommand_on_all_nested_workspace_roots,
 };
 use std::env::{args, current_dir};
 
@@ -31,18 +32,28 @@ enum Action {
 fn main() -> Result<()> {
     let args = args().collect::<Vec<_>>();
 
-    let Some((subcommand, args)) = parse_args(&args)? else {
+    let Some((subcommand, inherited_args)) = parse_args(&args)? else {
         return Ok(());
     };
 
     // smoelius: Run on current package or workspace.
-    let mut command = build_cargo_command(Source::CargoNested, None, &subcommand, args)?;
+    let mut command = build_cargo_command(
+        Source::CargoNested,
+        None,
+        &subcommand,
+        &Args::inherited(inherited_args),
+    )?;
     let status = command.status()?;
     ensure!(status.success(), "command failed: {command:?}");
 
     // smoelius: Run on all nested workspaces.
     let current_dir = current_dir()?;
-    run_cargo_subcommand_on_all_nested_workspace_roots(&subcommand, args, &current_dir, false)?;
+    run_cargo_subcommand_on_all_nested_workspace_roots(
+        &subcommand,
+        inherited_args,
+        &current_dir,
+        false,
+    )?;
 
     Ok(())
 }
