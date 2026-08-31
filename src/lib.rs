@@ -21,7 +21,7 @@ mod cargo_nested;
 
 mod command;
 pub use command::{
-    CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
+    Args, CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
 };
 use command::{PackageContext, parent_cargo_command};
 
@@ -166,10 +166,8 @@ impl Builder {
             .unwrap();
     }
 
-    fn run_parent_cargo_command_on_current_package_nested_workspace_roots(mut self) -> Result<()> {
-        let (subcommand, subcommand_args) = parent_cargo_command()?;
-
-        self.args.extend(subcommand_args.iter().map(OsString::from));
+    fn run_parent_cargo_command_on_current_package_nested_workspace_roots(self) -> Result<()> {
+        let (subcommand, inherited_args) = parent_cargo_command()?;
 
         let roots = current_package_nested_workspace_roots()?;
         env_logger::try_init().unwrap_or_default();
@@ -220,7 +218,7 @@ impl Builder {
                 );
             }
             let _delimiter = Delimiter::new(&root.path);
-            let command = self.cargo_command(Some(&root.package), &subcommand)?;
+            let command = self.cargo_command(Some(&root.package), &subcommand, inherited_args)?;
             run_cargo_command(self.source, root, command)?;
         }
         Ok(())
@@ -230,8 +228,13 @@ impl Builder {
         &self,
         package: Option<&PackageContext>,
         subcommand: &CargoSubcommand,
+        inherited_args: &[OsString],
     ) -> Result<Command> {
-        build_cargo_command(self.source, package, subcommand, &self.args)
+        let args = Args {
+            explicit: &self.args,
+            inherited: inherited_args,
+        };
+        build_cargo_command(self.source, package, subcommand, &args)
     }
 }
 
@@ -277,7 +280,7 @@ fn touch(path: &Path) -> Result<()> {
 #[doc(hidden)]
 pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
     subcommand: &CargoSubcommand,
-    args: &[T],
+    inherited_args: &[T],
     dir: &Path,
     is_recursive_call: bool,
 ) -> Result<()> {
@@ -288,12 +291,21 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
     }
     for root in &roots {
         let _delimiter = Delimiter::new(&root.path);
-        let command =
-            build_cargo_command(Source::CargoNested, Some(&root.package), subcommand, args)?;
+        let command = build_cargo_command(
+            Source::CargoNested,
+            Some(&root.package),
+            subcommand,
+            &Args::inherited(inherited_args),
+        )?;
         run_cargo_command(Source::CargoNested, root, command)?;
         // smoelius: `cargo nested` is a special case. It must be run manually on each nested
         // workspace root to ensure that _nested_-nested workspaces are handled.
-        run_cargo_subcommand_on_all_nested_workspace_roots(subcommand, args, &root.path, true)?;
+        run_cargo_subcommand_on_all_nested_workspace_roots(
+            subcommand,
+            inherited_args,
+            &root.path,
+            true,
+        )?;
     }
     Ok(())
 }
