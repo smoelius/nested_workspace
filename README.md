@@ -122,7 +122,7 @@ The filtering below applies only to inherited arguments.
   - `--offline` helps to avoid deadlocks (see [Potential deadlocks] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
-- The following arguments are forwarded: `--frozen` and `--locked`.
+- The following arguments are forwarded provided they were not already passed with [`Builder::arg`] or [`Builder::args`]: `--frozen` and `--locked`. (Cargo rejects either option given more than once.)
 
 - All arguments besides those covered by the previous bullet are filtered out, i.e., no other arguments are forwarded.
 

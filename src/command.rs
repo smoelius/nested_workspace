@@ -204,9 +204,14 @@ fn build_or_check_args<T: AsRef<OsStr>>(args: &Args<'_, T>) -> Vec<OsString> {
         .collect::<Vec<_>>();
     args_out.extend(args.explicit.iter().map(OsString::from));
     for arg in args.inherited {
-        // smoelius: The following arguments are forwarded: `--frozen` and `--locked`.
+        // smoelius: The following arguments are forwarded provided they were not already passed
+        // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`.
         let arg_as_ref = arg.as_ref();
-        if arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked") {
+        if (arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked"))
+            && !args_out
+                .iter()
+                .any(|arg_out| arg_out.as_os_str() == arg_as_ref)
+        {
             args_out.push(arg_as_ref.to_owned());
         }
         // smoelius: All arguments besides those covered by the previous bullet are filtered out,
@@ -298,6 +303,38 @@ mod tests {
                 assert_eq!(
                     args_expected.iter().map(OsStr::new).collect::<Vec<_>>(),
                     args_actual,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn build_and_check_do_not_forward_frozen_or_locked_twice() {
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            for flag in ["--frozen", "--locked"] {
+                let builder = crate::build().arg(flag);
+                let command = builder
+                    .cargo_command(Some(&package), &subcommand, &[OsString::from(flag)])
+                    .unwrap();
+
+                let args_actual = command.get_args().collect::<Vec<_>>();
+                assert_eq!(
+                    [
+                        OsStr::new(expected_subcommand),
+                        OsStr::new("-vv"),
+                        OsStr::new("--offline"),
+                        OsStr::new("--workspace"),
+                        OsStr::new(flag),
+                    ],
+                    args_actual.as_slice(),
                 );
             }
         }
