@@ -372,6 +372,41 @@ mod tests {
     }
 
     #[test]
+    fn build_and_check_prepend_explicit_args_to_inherited_args() {
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            let builder = crate::build().args(["--release"]);
+            let command = builder
+                .cargo_command(
+                    Some(&package),
+                    &subcommand,
+                    &[OsString::from("--locked"), OsString::from("--release")],
+                )
+                .unwrap();
+
+            let args_actual = command.get_args().collect::<Vec<_>>();
+            assert_eq!(
+                [
+                    OsStr::new(expected_subcommand),
+                    OsStr::new("-vv"),
+                    OsStr::new("--offline"),
+                    OsStr::new("--workspace"),
+                    OsStr::new("--release"),
+                    OsStr::new("--locked"),
+                ],
+                args_actual.as_slice(),
+            );
+        }
+    }
+
+    #[test]
     fn test_without_package_prepends_offline_and_workspace() {
         const ARGS_IN: &[&[&str]] = &[
             &["--", "--nocapture"],
