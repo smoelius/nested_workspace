@@ -83,6 +83,7 @@ fn parent_command(id: u32) -> Result<(u32, &'static [OsString])> {
     Ok((parent_id.as_u32(), cmd))
 }
 
+/// Parses a Cargo command, returning its subcommand and remaining arguments.
 #[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
@@ -102,6 +103,7 @@ pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
     parse_cargo_subcommand(&args[1..]).map(Some)
 }
 
+/// Parses a Cargo subcommand and returns its remaining arguments.
 #[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
@@ -129,6 +131,7 @@ pub struct Args<'a, T: AsRef<OsStr>> {
 }
 
 impl<'a, T: AsRef<OsStr>> Args<'a, T> {
+    /// Creates an argument set containing only inherited arguments.
     pub fn inherited(inherited: &'a [T]) -> Self {
         Self {
             explicit: &[],
@@ -137,6 +140,8 @@ impl<'a, T: AsRef<OsStr>> Args<'a, T> {
     }
 }
 
+/// Builds a Cargo command to run on a nested workspace or, for the initial `cargo nested`
+/// invocation, the current package or workspace.
 #[doc(hidden)]
 pub fn build_cargo_command<T: AsRef<OsStr>>(
     source: Source,
