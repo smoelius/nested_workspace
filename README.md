@@ -111,6 +111,10 @@ We may revisit the decision to not clear `RUSTC_WORKSPACE_WRAPPER` in the future
 
 ## Argument handling
 
+Arguments specified with [`Builder::arg`] or [`Builder::args`] are inserted unchanged after the
+automatically prepended arguments and before arguments inherited from the parent Cargo invocation.
+The filtering below applies only to inherited arguments.
+
 ### `cargo build` and `cargo check`
 
 - The following arguments are prepended to the arguments passed: `-vv`, `--offline`, and `--workspace`.
@@ -118,7 +122,7 @@ We may revisit the decision to not clear `RUSTC_WORKSPACE_WRAPPER` in the future
   - `--offline` helps to avoid deadlocks (see [Potential deadlocks] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
-- The following arguments are forwarded: `--frozen` and `--locked`.
+- The following arguments are forwarded provided they were not already passed with [`Builder::arg`] or [`Builder::args`]: `--frozen` and `--locked`. (Cargo rejects either option given more than once.)
 
 - All arguments besides those covered by the previous bullet are filtered out, i.e., no other arguments are forwarded.
 
@@ -227,6 +231,8 @@ For other subcommands, there is no obvious trigger. Hence, other subcommands mus
 [Usage]: #usage
 [Why would one need multiple workspaces?]: #why-would-one-need-multiple-workspaces
 [_not_ cleared]: #environment-variable-handling
+[`Builder::arg`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html#method.arg
+[`Builder::args`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html#method.args
 [`Builder`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html
 [`arg`]: https://docs.rs/nested_workspace/latest/nested_workspace/struct.Builder.html#method.arg
 [`gix-transport`]: https://github.com/GitoxideLabs/gitoxide/blob/8c353ea00c805604113a567d2f5157be94cc9f28/gix-transport/src/client/blocking_io/http/mod.rs#L25-L26

@@ -83,6 +83,7 @@ fn parent_command(id: u32) -> Result<(u32, &'static [OsString])> {
     Ok((parent_id.as_u32(), cmd))
 }
 
+/// Parses a Cargo command, returning its subcommand and remaining arguments.
 #[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
@@ -102,6 +103,7 @@ pub fn parse_cargo_command<T: AsRef<OsStr> + Debug>(
     parse_cargo_subcommand(&args[1..]).map(Some)
 }
 
+/// Parses a Cargo subcommand and returns its remaining arguments.
 #[doc(hidden)]
 #[expect(clippy::similar_names)]
 pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
@@ -123,11 +125,29 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
 }
 
 #[doc(hidden)]
+pub struct Args<'a, T: AsRef<OsStr>> {
+    pub explicit: &'a [T],
+    pub inherited: &'a [T],
+}
+
+impl<'a, T: AsRef<OsStr>> Args<'a, T> {
+    /// Creates an argument set containing only inherited arguments.
+    pub fn inherited(inherited: &'a [T]) -> Self {
+        Self {
+            explicit: &[],
+            inherited,
+        }
+    }
+}
+
+/// Builds a Cargo command to run on a nested workspace or, for the initial `cargo nested`
+/// invocation, the current package or workspace.
+#[doc(hidden)]
 pub fn build_cargo_command<T: AsRef<OsStr>>(
     source: Source,
     package: Option<&PackageContext>,
     subcommand: &CargoSubcommand,
-    args: &[T],
+    args: &Args<'_, T>,
 ) -> Result<Command> {
     let mut command = Command::new("cargo");
     let (subcommand, args) = match (&source, &subcommand) {
@@ -146,7 +166,11 @@ pub fn build_cargo_command<T: AsRef<OsStr>>(
         // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
         // accept such an option. `cargo fmt` is an example.
         (Source::CargoNested, _) => {
-            let args = args.iter().map(OsString::from).collect();
+            assert!(
+                args.explicit.is_empty(),
+                "`cargo-nested` should not use explicit arguments"
+            );
+            let args = args.inherited.iter().map(OsString::from).collect();
             (subcommand.as_os_str(), args)
         }
         (_, _) => bail!("{source} unexpectedly invoked subcommand `{subcommand}`"),
@@ -176,17 +200,23 @@ pub fn build_cargo_command<T: AsRef<OsStr>>(
     Ok(command)
 }
 
-fn build_or_check_args<T: AsRef<OsStr>>(args_in: &[T]) -> Vec<OsString> {
+fn build_or_check_args<T: AsRef<OsStr>>(args: &Args<'_, T>) -> Vec<OsString> {
     // smoelius: The following arguments are prepended to the arguments passed: `-vv`, `--offline`,
     // and `--workspace`.
     let mut args_out = ["-vv", "--offline", "--workspace"]
         .iter()
         .map(OsString::from)
         .collect::<Vec<_>>();
-    for arg in args_in {
-        // smoelius: The following arguments are forwarded: `--frozen` and `--locked`.
+    args_out.extend(args.explicit.iter().map(OsString::from));
+    for arg in args.inherited {
+        // smoelius: The following arguments are forwarded provided they were not already passed
+        // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`.
         let arg_as_ref = arg.as_ref();
-        if arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked") {
+        if (arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked"))
+            && !args_out
+                .iter()
+                .any(|arg_out| arg_out.as_os_str() == arg_as_ref)
+        {
             args_out.push(arg_as_ref.to_owned());
         }
         // smoelius: All arguments besides those covered by the previous bullet are filtered out,
@@ -197,7 +227,7 @@ fn build_or_check_args<T: AsRef<OsStr>>(args_in: &[T]) -> Vec<OsString> {
     args_out
 }
 
-fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args_in: &[T]) -> Vec<OsString> {
+fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args: &Args<'_, T>) -> Vec<OsString> {
     // smoelius: The following arguments are prepended to the arguments passed: `--offline` and
     // `--workspace`. (The reason for prepending these arguments is to ensure they do not appear
     // after `--` and are thus rejected by `libtest`.)
@@ -205,8 +235,9 @@ fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args_in: &[T]) -> Vec<
         .iter()
         .map(OsString::from)
         .collect::<Vec<_>>();
+    args_out.extend(args.explicit.iter().map(OsString::from));
     let package_name = package_name.map(OsStr::new);
-    let mut iter = args_in.iter().peekable();
+    let mut iter = args.inherited.iter().peekable();
     while let Some(arg) = iter.next() {
         let arg_as_ref = arg.as_ref();
         // smoelius: The following arguments are filtered out: `-p <containing-package>` and
@@ -265,9 +296,13 @@ mod tests {
                 ),
             ];
             for (args_in, args_expected) in args_in_and_expected {
-                let command =
-                    build_cargo_command(Source::BuildScript, Some(&package), &subcommand, args_in)
-                        .unwrap();
+                let command = build_cargo_command(
+                    Source::BuildScript,
+                    Some(&package),
+                    &subcommand,
+                    &Args::inherited(args_in),
+                )
+                .unwrap();
 
                 let args_actual = command.get_args().collect::<Vec<_>>();
                 assert_eq!(
@@ -279,8 +314,7 @@ mod tests {
     }
 
     #[test]
-    fn build_and_check_forward_locked_from_builder() {
-        let builder = crate::build().arg("--locked");
+    fn build_and_check_do_not_forward_frozen_or_locked_twice() {
         let package = PackageContext {
             name: "package".to_owned(),
             dependent: false,
@@ -290,7 +324,42 @@ mod tests {
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
         ] {
-            let command = builder.cargo_command(Some(&package), &subcommand).unwrap();
+            for flag in ["--frozen", "--locked"] {
+                let builder = crate::build().arg(flag);
+                let command = builder
+                    .cargo_command(Some(&package), &subcommand, &[OsString::from(flag)])
+                    .unwrap();
+
+                let args_actual = command.get_args().collect::<Vec<_>>();
+                assert_eq!(
+                    [
+                        OsStr::new(expected_subcommand),
+                        OsStr::new("-vv"),
+                        OsStr::new("--offline"),
+                        OsStr::new("--workspace"),
+                        OsStr::new(flag),
+                    ],
+                    args_actual.as_slice(),
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn build_and_check_forward_explicit_args_unconditionally() {
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            let builder = crate::build().args(["--locked", "--release"]);
+            let command = builder
+                .cargo_command(Some(&package), &subcommand, &[])
+                .unwrap();
 
             let args_actual = command.get_args().collect::<Vec<_>>();
             assert_eq!(
@@ -299,6 +368,42 @@ mod tests {
                     OsStr::new("-vv"),
                     OsStr::new("--offline"),
                     OsStr::new("--workspace"),
+                    OsStr::new("--locked"),
+                    OsStr::new("--release"),
+                ],
+                args_actual.as_slice(),
+            );
+        }
+    }
+
+    #[test]
+    fn build_and_check_prepend_explicit_args_to_inherited_args() {
+        let package = PackageContext {
+            name: "package".to_owned(),
+            dependent: false,
+        };
+
+        for (subcommand, expected_subcommand) in [
+            (CargoSubcommand::Build, "build"),
+            (CargoSubcommand::Check, "check"),
+        ] {
+            let builder = crate::build().args(["--release"]);
+            let command = builder
+                .cargo_command(
+                    Some(&package),
+                    &subcommand,
+                    &[OsString::from("--locked"), OsString::from("--release")],
+                )
+                .unwrap();
+
+            let args_actual = command.get_args().collect::<Vec<_>>();
+            assert_eq!(
+                [
+                    OsStr::new(expected_subcommand),
+                    OsStr::new("-vv"),
+                    OsStr::new("--offline"),
+                    OsStr::new("--workspace"),
+                    OsStr::new("--release"),
                     OsStr::new("--locked"),
                 ],
                 args_actual.as_slice(),
@@ -314,8 +419,13 @@ mod tests {
             &["--workspace", "--", "--nocapture"],
         ];
         for args_in in ARGS_IN {
-            let command =
-                build_cargo_command(Source::Test, None, &CargoSubcommand::Test, args_in).unwrap();
+            let command = build_cargo_command(
+                Source::Test,
+                None,
+                &CargoSubcommand::Test,
+                &Args::inherited(args_in),
+            )
+            .unwrap();
 
             let args = command.get_args().collect::<Vec<_>>();
             assert_eq!(
@@ -329,5 +439,29 @@ mod tests {
                 args.as_slice(),
             );
         }
+    }
+
+    #[test]
+    fn test_prepends_explicit_args_to_inherited_args() {
+        let builder = crate::test().args(["--release"]);
+        let command = builder
+            .cargo_command(
+                None,
+                &CargoSubcommand::Test,
+                &[OsString::from("--"), OsString::from("--nocapture")],
+            )
+            .unwrap();
+
+        assert_eq!(
+            [
+                OsStr::new("test"),
+                OsStr::new("--offline"),
+                OsStr::new("--workspace"),
+                OsStr::new("--release"),
+                OsStr::new("--"),
+                OsStr::new("--nocapture"),
+            ],
+            command.get_args().collect::<Vec<_>>().as_slice(),
+        );
     }
 }

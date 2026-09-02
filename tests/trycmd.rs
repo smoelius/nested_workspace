@@ -206,8 +206,9 @@ fn test_correctness() {
                 fixture_suffix.display()
             );
 
-            assert_nested_command_wildcards(subdir, &path);
             assert_build_compiling_prefix(subdir, file_stem, &path, &table);
+            assert_nested_command_wildcards(subdir, &path);
+            assert_long_running_test_wildcards(subdir, &path);
         }
     }
 }
@@ -272,6 +273,39 @@ fn assert_nested_command_wildcards(subdir: &str, path: &Path) {
                     stderr_path.display()
                 );
             }
+        }
+    }
+}
+
+/// Libtest can emit a timing notification while a test is still running. Require a wildcard after
+/// `running 1 test` unless the test result follows immediately so slow runners do not make the
+/// snapshot flaky. Trycmd's multiline wildcard normalization otherwise reports the final blank
+/// line as extra when the notification wildcard matches no lines, so require a trailing wildcard
+/// as well.
+fn assert_long_running_test_wildcards(subdir: &str, path: &Path) {
+    if subdir == "test" {
+        let stdout_path = path.with_extension("stdout");
+        let stdout_contents = read_to_string_wc(&stdout_path).unwrap();
+        let mut lines = stdout_contents.lines();
+        let mut has_long_running_test_wildcard = false;
+        while let Some(line) = lines.next() {
+            if line == "running 1 test" {
+                let next = lines.next();
+                assert!(
+                    next == Some("...") || next.is_some_and(|line| line.starts_with("test ")),
+                    "`{}` does not have `...` after `{line}`",
+                    stdout_path.display()
+                );
+                has_long_running_test_wildcard |= next == Some("...");
+            }
+        }
+        if has_long_running_test_wildcard {
+            assert_eq!(
+                Some("..."),
+                stdout_contents.lines().last(),
+                "`{}` does not end with `...`",
+                stdout_path.display()
+            );
         }
     }
 }
