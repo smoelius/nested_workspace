@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0
+
+- Expand documentation with "Environment variable handling" and "Other uses of `cargo check`" sections ([64df967](https://github.com/smoelius/nested_workspace/commit/64df967d37eac8c2c86455d11540ba0916074351))
+- Other documentation improvements ([aceeda5](https://github.com/smoelius/nested_workspace/commit/aceeda5786bd3926cf5b3b5b4ea5173a4808a10b), [478b52c](https://github.com/smoelius/nested_workspace/commit/478b52c09a1f7460e7798250c8830f90d1073639), and [b30e32e](https://github.com/smoelius/nested_workspace/commit/b30e32ed0086536d3100967ab8802ddce9a4141a))
+- BREAKING: Forward `Builder` args unconditionally, i.e., do not subject them to the same filtering rules as arguments inherited from parent Cargo commands ([7aee19a](https://github.com/smoelius/nested_workspace/commit/7aee19a6541da1981b0e684fd0224fc17e3e7370))
+- Avoid forwarding inherited `--frozen` or `--locked` options when already present ([6683503](https://github.com/smoelius/nested_workspace/commit/6683503e2132e6efa338e20217a6ade73eed710b))
+
 ## 2.0.1
 
 - Expand documentation with "Unintentional lockfile updates" section ([3452e52](https://github.com/smoelius/nested_workspace/commit/3452e526215492d68b82b93e88f3ac7093923e0d))
