@@ -79,6 +79,7 @@ impl NestedWorkspaceRoot {
     }
 }
 
+/// Identifies whether a command is invoked through a build script, a test, or `cargo nested`.
 #[doc(hidden)]
 #[derive(Clone, Copy)]
 pub enum Source {
@@ -331,6 +332,8 @@ pub fn all_containing_packages(dir: &Path) -> Result<Vec<ContainingPackage>> {
     Ok(containing_packages)
 }
 
+/// Writes a missing-workspace warning to stderr, optionally naming `dir`. Suppresses the warning
+/// for recursive calls.
 #[doc(hidden)]
 pub fn warn_about_missing_nested_workspaces(
     dir: Option<&Path>,

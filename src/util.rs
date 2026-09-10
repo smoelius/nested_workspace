@@ -5,6 +5,8 @@ use std::{
     path::Path,
 };
 
+/// Writes an opening marker to stderr when created and a corresponding closing marker when dropped.
+/// Both markers include the workspace path.
 #[doc(hidden)]
 pub struct Delimiter<'a>(&'a Path);
 
