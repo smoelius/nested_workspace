@@ -1,6 +1,6 @@
 use anyhow::{Result, bail, ensure};
 use nested_workspace::{
-    Args, CargoSubcommand, Source, all_nested_workspace_roots, build_cargo_command,
+    Args, CargoSubcommand, Source, all_containing_packages, build_cargo_command,
     parse_cargo_command, parse_cargo_subcommand,
     run_cargo_subcommand_on_all_nested_workspace_roots,
 };
@@ -42,6 +42,7 @@ fn main() -> Result<()> {
         None,
         &subcommand,
         &Args::inherited(inherited_args),
+        false,
     )?;
     let status = command.status()?;
     ensure!(status.success(), "command failed: {command:?}");
@@ -107,16 +108,18 @@ fn parse_cargo_nested_args(args: &[String]) -> Result<bool> {
 
 fn list_nested_workspaces() -> Result<()> {
     let current_dir = current_dir()?;
-    for root in all_nested_workspace_roots(&current_dir)? {
-        let path = root
-            .path()
-            .strip_prefix(&current_dir)
-            .unwrap_or(root.path());
-        println!(
-            "{}{}",
-            path.display(),
-            if root.dependent() { " (dependent)" } else { "" }
-        );
+    for containing_package in all_containing_packages(&current_dir)? {
+        for root in containing_package.roots {
+            let path = root
+                .path()
+                .strip_prefix(&current_dir)
+                .unwrap_or(root.path());
+            println!(
+                "{}{}",
+                path.display(),
+                if root.dependent() { " (dependent)" } else { "" }
+            );
+        }
     }
     Ok(())
 }

@@ -41,12 +41,6 @@ impl std::fmt::Display for CargoSubcommand {
     }
 }
 
-#[derive(Clone)]
-pub struct PackageContext {
-    pub name: String,
-    pub dependent: bool,
-}
-
 static SYSTEM: LazyLock<System> = LazyLock::new(|| {
     System::new_with_specifics(
         RefreshKind::nothing()
@@ -145,9 +139,10 @@ impl<'a, T: AsRef<OsStr>> Args<'a, T> {
 #[doc(hidden)]
 pub fn build_cargo_command<T: AsRef<OsStr>>(
     source: Source,
-    package: Option<&PackageContext>,
+    package_name: Option<&str>,
     subcommand: &CargoSubcommand,
     args: &Args<'_, T>,
+    dependent: bool,
 ) -> Result<Command> {
     let mut command = Command::new("cargo");
     let (subcommand, args) = match (&source, &subcommand) {
@@ -159,10 +154,9 @@ pub fn build_cargo_command<T: AsRef<OsStr>>(
         (Source::BuildScript, _subcommand_other_than_check) => {
             (OsStr::new("build"), build_or_check_args(args))
         }
-        (Source::Test, CargoSubcommand::Test) => (
-            OsStr::new("test"),
-            test_args(package.map(|package| package.name.as_str()), args),
-        ),
+        (Source::Test, CargoSubcommand::Test) => {
+            (OsStr::new("test"), test_args(package_name, args))
+        }
         // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
         // accept such an option. `cargo fmt` is an example.
         (Source::CargoNested, _) => {
@@ -185,13 +179,13 @@ pub fn build_cargo_command<T: AsRef<OsStr>>(
             command.env(CARGO_NESTED_ENV, "1");
         }
         Source::BuildScript => {
-            let Some(package) = package else {
+            let Some(package_name) = package_name else {
                 bail!("failed to get package name");
             };
-            let reentrancy_guard = reentrancy_guard_from_package_name(&package.name);
+            let reentrancy_guard = reentrancy_guard_from_package_name(package_name);
             command.env(reentrancy_guard, "1");
-            if package.dependent {
-                let dependent = dependent_from_package_name(&package.name);
+            if dependent {
+                let dependent = dependent_from_package_name(package_name);
                 command.env(dependent, "1");
             }
         }
@@ -265,11 +259,6 @@ mod tests {
 
     #[test]
     fn build_and_check_forward_frozen_and_locked() {
-        let package = PackageContext {
-            name: "package".to_owned(),
-            dependent: false,
-        };
-
         for (subcommand, expected_subcommand) in [
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
@@ -299,9 +288,10 @@ mod tests {
             for (args_in, args_expected) in args_in_and_expected {
                 let command = build_cargo_command(
                     Source::BuildScript,
-                    Some(&package),
+                    Some("package"),
                     &subcommand,
                     &Args::inherited(args_in),
+                    false,
                 )
                 .unwrap();
 
@@ -316,11 +306,6 @@ mod tests {
 
     #[test]
     fn build_and_check_do_not_forward_frozen_or_locked_twice() {
-        let package = PackageContext {
-            name: "package".to_owned(),
-            dependent: false,
-        };
-
         for (subcommand, expected_subcommand) in [
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
@@ -328,7 +313,7 @@ mod tests {
             for flag in ["--frozen", "--locked"] {
                 let builder = crate::build().arg(flag);
                 let command = builder
-                    .cargo_command(Some(&package), &subcommand, &[OsString::from(flag)])
+                    .cargo_command(Some("package"), &subcommand, &[OsString::from(flag)], false)
                     .unwrap();
 
                 let args_actual = command.get_args().collect::<Vec<_>>();
@@ -348,18 +333,13 @@ mod tests {
 
     #[test]
     fn build_and_check_forward_explicit_args_unconditionally() {
-        let package = PackageContext {
-            name: "package".to_owned(),
-            dependent: false,
-        };
-
         for (subcommand, expected_subcommand) in [
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
         ] {
             let builder = crate::build().args(["--locked", "--release"]);
             let command = builder
-                .cargo_command(Some(&package), &subcommand, &[])
+                .cargo_command(Some("package"), &subcommand, &[], false)
                 .unwrap();
 
             let args_actual = command.get_args().collect::<Vec<_>>();
@@ -379,11 +359,6 @@ mod tests {
 
     #[test]
     fn build_and_check_prepend_explicit_args_to_inherited_args() {
-        let package = PackageContext {
-            name: "package".to_owned(),
-            dependent: false,
-        };
-
         for (subcommand, expected_subcommand) in [
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
@@ -391,9 +366,10 @@ mod tests {
             let builder = crate::build().args(["--release"]);
             let command = builder
                 .cargo_command(
-                    Some(&package),
+                    Some("package"),
                     &subcommand,
                     &[OsString::from("--locked"), OsString::from("--release")],
+                    false,
                 )
                 .unwrap();
 
@@ -425,6 +401,7 @@ mod tests {
                 None,
                 &CargoSubcommand::Test,
                 &Args::inherited(args_in),
+                false,
             )
             .unwrap();
 
@@ -450,6 +427,7 @@ mod tests {
                 None,
                 &CargoSubcommand::Test,
                 &[OsString::from("--"), OsString::from("--nocapture")],
+                false,
             )
             .unwrap();
 

@@ -20,10 +20,10 @@ use std::{
 mod cargo_nested;
 
 mod command;
+use command::parent_cargo_command;
 pub use command::{
     Args, CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
 };
-use command::{PackageContext, parent_cargo_command};
 
 mod reentrancy_guard;
 use reentrancy_guard::check_reentrancy_guard;
@@ -65,7 +65,7 @@ impl MetadataRoot {
 #[doc(hidden)]
 pub struct NestedWorkspaceRoot {
     path: PathBuf,
-    package: PackageContext,
+    dependent: bool,
 }
 
 impl NestedWorkspaceRoot {
@@ -78,7 +78,7 @@ impl NestedWorkspaceRoot {
     /// Returns whether the nested workspace depends on its containing package.
     #[must_use]
     pub fn dependent(&self) -> bool {
-        self.package.dependent
+        self.dependent
     }
 }
 
@@ -182,12 +182,13 @@ impl Builder {
     fn run_parent_cargo_command_on_current_package_nested_workspace_roots(self) -> Result<()> {
         let (subcommand, inherited_args) = parent_cargo_command()?;
 
-        let roots = current_package_nested_workspace_roots()?;
+        let containing_package = current_package_as_containing_package()?;
         env_logger::try_init().unwrap_or_default();
-        if warn_if_no_nested_workspaces(&roots, None, false)? {
+        if !containing_package.has_nested_workspace_roots() {
+            warn_about_missing_nested_workspaces(None, false)?;
             return Ok(());
         }
-        for root in &roots {
+        for root in &containing_package.roots {
             if matches!(self.source, Source::BuildScript)
                 && nested_workspace_uses_current_build_directory(&root.path)?
             {
@@ -231,7 +232,12 @@ impl Builder {
                 );
             }
             let _delimiter = Delimiter::new(&root.path);
-            let command = self.cargo_command(Some(&root.package), &subcommand, inherited_args)?;
+            let command = self.cargo_command(
+                Some(&containing_package.name),
+                &subcommand,
+                inherited_args,
+                root.dependent(),
+            )?;
             run_cargo_command(self.source, root, command)?;
         }
         Ok(())
@@ -239,15 +245,16 @@ impl Builder {
 
     fn cargo_command(
         &self,
-        package: Option<&PackageContext>,
+        package_name: Option<&str>,
         subcommand: &CargoSubcommand,
         inherited_args: &[OsString],
+        dependent: bool,
     ) -> Result<Command> {
         let args = Args {
             explicit: &self.args,
             inherited: inherited_args,
         };
-        build_cargo_command(self.source, package, subcommand, &args)
+        build_cargo_command(self.source, package_name, subcommand, &args, dependent)
     }
 }
 
@@ -298,33 +305,53 @@ pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
     dir: &Path,
     is_recursive_call: bool,
 ) -> Result<()> {
-    let roots = all_nested_workspace_roots(dir)?;
+    let containing_packages = all_containing_packages(dir)?;
     env_logger::try_init().unwrap_or_default();
-    if warn_if_no_nested_workspaces(&roots, Some(dir), is_recursive_call)? {
+    if !containing_packages
+        .iter()
+        .any(ContainingPackage::has_nested_workspace_roots)
+    {
+        warn_about_missing_nested_workspaces(Some(dir), is_recursive_call)?;
         return Ok(());
     }
-    for root in &roots {
-        let _delimiter = Delimiter::new(&root.path);
-        let command = build_cargo_command(
-            Source::CargoNested,
-            Some(&root.package),
-            subcommand,
-            &Args::inherited(inherited_args),
-        )?;
-        run_cargo_command(Source::CargoNested, root, command)?;
-        // smoelius: `cargo nested` is a special case. It must be run manually on each nested
-        // workspace root to ensure that _nested_-nested workspaces are handled.
-        run_cargo_subcommand_on_all_nested_workspace_roots(
-            subcommand,
-            inherited_args,
-            &root.path,
-            true,
-        )?;
+    for containing_package in &containing_packages {
+        for root in &containing_package.roots {
+            let _delimiter = Delimiter::new(root.path());
+            let command = build_cargo_command(
+                Source::CargoNested,
+                Some(&containing_package.name),
+                subcommand,
+                &Args::inherited(inherited_args),
+                root.dependent(),
+            )?;
+            run_cargo_command(Source::CargoNested, root, command)?;
+            // smoelius: `cargo nested` is a special case. It must be run manually on each nested
+            // workspace root to ensure that _nested_-nested workspaces are handled.
+            run_cargo_subcommand_on_all_nested_workspace_roots(
+                subcommand,
+                inherited_args,
+                root.path(),
+                true,
+            )?;
+        }
     }
     Ok(())
 }
 
-fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> {
+#[doc(hidden)]
+pub struct ContainingPackage {
+    pub name: String,
+    pub roots: Vec<NestedWorkspaceRoot>,
+}
+
+impl ContainingPackage {
+    #[must_use]
+    pub fn has_nested_workspace_roots(&self) -> bool {
+        !self.roots.is_empty()
+    }
+}
+
+fn current_package_as_containing_package() -> Result<ContainingPackage> {
     let cargo_manifest_path = var_wc("CARGO_MANIFEST_PATH")?;
     let cargo_metadata = MetadataCommand::new().no_deps().exec()?;
     let Some(package) = cargo_metadata
@@ -337,33 +364,34 @@ fn current_package_nested_workspace_roots() -> Result<Vec<NestedWorkspaceRoot>> 
     let Some(roots) = nested_workspace_roots_for_package(package)? else {
         bail!("package at `{cargo_manifest_path}` has no `nested_workspace` metadata");
     };
-    Ok(roots)
+    Ok(ContainingPackage {
+        name: package.name.to_string(),
+        roots,
+    })
 }
 
-/// Returns the nested workspace roots of the packages in `dir`'s workspace. Does not recurse
-/// into the returned roots.
+/// Returns the containing packages in `dir`'s workspace. Does not recurse into the returned roots.
 #[doc(hidden)]
-pub fn all_nested_workspace_roots(dir: &Path) -> Result<Vec<NestedWorkspaceRoot>> {
-    let mut roots = Vec::new();
+pub fn all_containing_packages(dir: &Path) -> Result<Vec<ContainingPackage>> {
+    let mut containing_packages = Vec::new();
     let cargo_metadata = MetadataCommand::new().current_dir(dir).no_deps().exec()?;
     for package in &cargo_metadata.packages {
         if let Some(current_roots) = nested_workspace_roots_for_package(package)? {
-            roots.extend(current_roots);
+            containing_packages.push(ContainingPackage {
+                name: package.name.to_string(),
+                roots: current_roots,
+            });
         }
     }
-    Ok(roots)
+    Ok(containing_packages)
 }
 
-fn warn_if_no_nested_workspaces(
-    roots: &[NestedWorkspaceRoot],
-    dir: Option<&Path>,
-    is_recursive_call: bool,
-) -> Result<bool> {
-    if roots.is_empty() && !is_recursive_call {
+fn warn_about_missing_nested_workspaces(dir: Option<&Path>, is_recursive_call: bool) -> Result<()> {
+    if !is_recursive_call {
         let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
         writeln!(stderr(), "Warning: found no nested workspaces{in_dir}")?;
     }
-    Ok(roots.is_empty())
+    Ok(())
 }
 
 fn run_cargo_command(
@@ -410,10 +438,7 @@ fn nested_workspace_roots_for_package(
             }
             roots.push(NestedWorkspaceRoot {
                 path,
-                package: PackageContext {
-                    name: package.name.to_string(),
-                    dependent: root.dependent(),
-                },
+                dependent: root.dependent(),
             });
         }
     }
