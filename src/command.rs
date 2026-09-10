@@ -16,6 +16,7 @@ use std::{
 };
 use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System, UpdateKind};
 
+/// A Cargo subcommand, with variants for recognized commands and a fallback for other commands.
 #[doc(hidden)]
 pub enum CargoSubcommand {
     Build,
@@ -120,6 +121,7 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
     Ok((subcommand, &args[1..]))
 }
 
+/// Explicit arguments supplied by a builder and arguments inherited from a parent Cargo invocation.
 #[doc(hidden)]
 pub struct Args<'a, T: AsRef<OsStr>> {
     pub explicit: &'a [T],
@@ -136,6 +138,8 @@ impl<'a, T: AsRef<OsStr>> Args<'a, T> {
     }
 }
 
+/// Prepares the Cargo subcommand and its arguments according to the invocation source. Emits
+/// warnings for inherited arguments removed by filtering or deduplication.
 fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
     source: Source,
     package_name: Option<&str>,
