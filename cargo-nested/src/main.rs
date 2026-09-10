@@ -1,10 +1,14 @@
 use anyhow::{Result, bail, ensure};
 use nested_workspace::{
-    Args, CargoSubcommand, Source, all_containing_packages, build_cargo_command,
-    parse_cargo_command, parse_cargo_subcommand,
-    run_cargo_subcommand_on_all_nested_workspace_roots,
+    Args, CargoSubcommand, ContainingPackage, Delimiter, Source, all_containing_packages,
+    build_cargo_command, parse_cargo_command, parse_cargo_subcommand, run_cargo_command,
+    warn_about_missing_nested_workspaces,
 };
-use std::env::{args, current_dir};
+use std::{
+    env::{args, current_dir},
+    ffi::OsStr,
+    path::Path,
+};
 
 const USAGE: &str = concat!(
     "Usage: cargo nested [OPTIONS or Cargo SUBCOMMAND]\n",
@@ -30,6 +34,8 @@ enum Action {
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let args = args().collect::<Vec<_>>();
 
     let Some((subcommand, inherited_args)) = parse_args(&args)? else {
@@ -119,6 +125,47 @@ fn list_nested_workspaces() -> Result<()> {
                 path.display(),
                 if root.dependent() { " (dependent)" } else { "" }
             );
+        }
+    }
+    Ok(())
+}
+
+/// Runs a Cargo subcommand recursively on every nested workspace under `dir`.
+// smoelius: `cargo nested` has no need to worry about containing packages and effectively ignores
+// them.
+fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
+    subcommand: &CargoSubcommand,
+    inherited_args: &[T],
+    dir: &Path,
+    is_recursive_call: bool,
+) -> Result<()> {
+    let containing_packages = all_containing_packages(dir)?;
+    if !containing_packages
+        .iter()
+        .any(ContainingPackage::has_nested_workspace_roots)
+    {
+        warn_about_missing_nested_workspaces(Some(dir), is_recursive_call)?;
+        return Ok(());
+    }
+    for containing_package in &containing_packages {
+        for root in &containing_package.roots {
+            let _delimiter = Delimiter::new(root.path());
+            let command = build_cargo_command(
+                Source::CargoNested,
+                Some(&containing_package.name),
+                subcommand,
+                &Args::inherited(inherited_args),
+                root.dependent(),
+            )?;
+            run_cargo_command(Source::CargoNested, root, command)?;
+            // smoelius: `cargo nested` is a special case. It must be run manually on each nested
+            // workspace root to ensure that _nested_-nested workspaces are handled.
+            run_cargo_subcommand_on_all_nested_workspace_roots(
+                subcommand,
+                inherited_args,
+                root.path(),
+                true,
+            )?;
         }
     }
     Ok(())
