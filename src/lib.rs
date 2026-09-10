@@ -29,7 +29,7 @@ mod reentrancy_guard;
 use reentrancy_guard::check_reentrancy_guard;
 
 mod util;
-use util::Delimiter;
+pub use util::Delimiter;
 
 #[derive(Deserialize)]
 struct Metadata {
@@ -297,47 +297,6 @@ fn touch(path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// Runs a Cargo subcommand recursively on every nested workspace under `dir`.
-#[doc(hidden)]
-pub fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
-    subcommand: &CargoSubcommand,
-    inherited_args: &[T],
-    dir: &Path,
-    is_recursive_call: bool,
-) -> Result<()> {
-    let containing_packages = all_containing_packages(dir)?;
-    env_logger::try_init().unwrap_or_default();
-    if !containing_packages
-        .iter()
-        .any(ContainingPackage::has_nested_workspace_roots)
-    {
-        warn_about_missing_nested_workspaces(Some(dir), is_recursive_call)?;
-        return Ok(());
-    }
-    for containing_package in &containing_packages {
-        for root in &containing_package.roots {
-            let _delimiter = Delimiter::new(root.path());
-            let command = build_cargo_command(
-                Source::CargoNested,
-                Some(&containing_package.name),
-                subcommand,
-                &Args::inherited(inherited_args),
-                root.dependent(),
-            )?;
-            run_cargo_command(Source::CargoNested, root, command)?;
-            // smoelius: `cargo nested` is a special case. It must be run manually on each nested
-            // workspace root to ensure that _nested_-nested workspaces are handled.
-            run_cargo_subcommand_on_all_nested_workspace_roots(
-                subcommand,
-                inherited_args,
-                root.path(),
-                true,
-            )?;
-        }
-    }
-    Ok(())
-}
-
 #[doc(hidden)]
 pub struct ContainingPackage {
     pub name: String,
@@ -386,7 +345,11 @@ pub fn all_containing_packages(dir: &Path) -> Result<Vec<ContainingPackage>> {
     Ok(containing_packages)
 }
 
-fn warn_about_missing_nested_workspaces(dir: Option<&Path>, is_recursive_call: bool) -> Result<()> {
+#[doc(hidden)]
+pub fn warn_about_missing_nested_workspaces(
+    dir: Option<&Path>,
+    is_recursive_call: bool,
+) -> Result<()> {
     if !is_recursive_call {
         let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
         writeln!(stderr(), "Warning: found no nested workspaces{in_dir}")?;
@@ -394,7 +357,8 @@ fn warn_about_missing_nested_workspaces(dir: Option<&Path>, is_recursive_call: b
     Ok(())
 }
 
-fn run_cargo_command(
+#[doc(hidden)]
+pub fn run_cargo_command(
     source: Source,
     root: &NestedWorkspaceRoot,
     mut command: Command,

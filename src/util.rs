@@ -5,9 +5,11 @@ use std::{
     path::Path,
 };
 
+#[doc(hidden)]
 pub struct Delimiter<'a>(&'a Path);
 
 impl<'a> Delimiter<'a> {
+    #[must_use]
     pub fn new(path: &'a Path) -> Self {
         let self_ = Self(path);
         self_.write_message(true);
