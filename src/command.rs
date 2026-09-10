@@ -8,6 +8,7 @@ use elaborate::std::{ffi::OsStrContext, path::PathContext};
 use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
+    io::{Write, stderr},
     path::Path,
     process::{Command, id},
     sync::LazyLock,
@@ -144,15 +145,18 @@ pub fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
     let (subcommand, args) = match (&source, &subcommand) {
         // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
         // running `cargo build` would be too much). For all other cases, run `cargo build`.
-        (Source::BuildScript, CargoSubcommand::Check) => {
-            (OsStr::new("check"), build_or_check_args(args))
-        }
-        (Source::BuildScript, _subcommand_other_than_check) => {
-            (OsStr::new("build"), build_or_check_args(args))
-        }
-        (Source::Test, CargoSubcommand::Test) => {
-            (OsStr::new("test"), test_args(package_name, args))
-        }
+        (Source::BuildScript, CargoSubcommand::Check) => (
+            OsStr::new("check"),
+            build_or_check_args(package_name, subcommand, args),
+        ),
+        (Source::BuildScript, _subcommand_other_than_check) => (
+            OsStr::new("build"),
+            build_or_check_args(package_name, &CargoSubcommand::Build, args),
+        ),
+        (Source::Test, CargoSubcommand::Test) => (
+            OsStr::new("test"),
+            test_args(package_name, subcommand, args),
+        ),
         // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
         // accept such an option. `cargo fmt` is an example.
         (Source::CargoNested, _) => {
@@ -210,7 +214,11 @@ where
     Ok(command)
 }
 
-fn build_or_check_args<T: AsRef<OsStr>>(args: &Args<'_, T>) -> Vec<OsString> {
+fn build_or_check_args<T: AsRef<OsStr>>(
+    package_name: Option<&str>,
+    subcommand: &CargoSubcommand,
+    args: &Args<'_, T>,
+) -> Vec<OsString> {
     // smoelius: The following arguments are prepended to the arguments passed: `-vv`, `--offline`,
     // and `--workspace`.
     let mut args_out = ["-vv", "--offline", "--workspace"]
@@ -218,55 +226,119 @@ fn build_or_check_args<T: AsRef<OsStr>>(args: &Args<'_, T>) -> Vec<OsString> {
         .map(OsString::from)
         .collect::<Vec<_>>();
     args_out.extend(args.explicit.iter().map(OsString::from));
+    let mut args_duplicated = Vec::new();
+    let mut args_filtered = Vec::new();
     for arg in args.inherited {
         // smoelius: The following arguments are forwarded provided they were not already passed
         // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`. (Cargo rejects
         // repeated occurrences of either option.)
         let arg_as_ref = arg.as_ref();
-        if (arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked"))
-            && !args_out
+        if arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked") {
+            if args_out
                 .iter()
                 .any(|arg_out| arg_out.as_os_str() == arg_as_ref)
-        {
-            args_out.push(arg_as_ref.to_owned());
+            {
+                args_duplicated.push(arg_as_ref.to_owned());
+            } else {
+                args_out.push(arg_as_ref.to_owned());
+            }
+        } else {
+            // smoelius: All arguments besides those covered by the previous bullet are filtered
+            // out, i.e., no other arguments are forwarded. Do not forward other `args`
+            // to `cargo build` or `cargo check`. If `args` contains `--manifest-path
+            // ...`, for example, the command could block.
+            args_filtered.push(arg_as_ref.to_owned());
         }
-        // smoelius: All arguments besides those covered by the previous bullet are filtered out,
-        // i.e., no other arguments are forwarded. Do not forward other `args` to `cargo build` or
-        // `cargo check`. If `args` contains `--manifest-path ...`, for example, the command could
-        // block.
+    }
+    if !args_filtered.is_empty() {
+        println!(
+            "cargo::warning={}",
+            filtered_message(package_name, subcommand, &args_filtered, false)
+        );
+    }
+    if !args_duplicated.is_empty() {
+        println!(
+            "cargo::warning={}",
+            filtered_message(package_name, subcommand, &args_duplicated, true)
+        );
     }
     args_out
 }
 
-fn test_args<T: AsRef<OsStr>>(package_name: Option<&str>, args: &Args<'_, T>) -> Vec<OsString> {
+fn test_args<T: AsRef<OsStr>>(
+    package_name: Option<&str>,
+    subcommand: &CargoSubcommand,
+    args: &Args<'_, T>,
+) -> Vec<OsString> {
+    const ARGS_INIT: [&str; 2] = ["--offline", "--workspace"];
     // smoelius: The following arguments are prepended to the arguments passed: `--offline` and
     // `--workspace`. (The reason for prepending these arguments is to ensure they do not appear
     // after `--` and are thus rejected by `libtest`.)
-    let mut args_out = ["--offline", "--workspace"]
-        .iter()
-        .map(OsString::from)
-        .collect::<Vec<_>>();
+    let mut args_out = ARGS_INIT.iter().map(OsString::from).collect::<Vec<_>>();
     args_out.extend(args.explicit.iter().map(OsString::from));
-    let package_name = package_name.map(OsStr::new);
+    let mut args_filtered = Vec::new();
+    let mut args_duplicated = Vec::new();
+    let package_name_os = package_name.map(OsStr::new);
     let mut iter = args.inherited.iter().peekable();
     while let Some(arg) = iter.next() {
         let arg_as_ref = arg.as_ref();
         // smoelius: The following arguments are filtered out: `-p <containing-package>` and
         // `--package <containing-package>`.
-        if let Some(package_name) = package_name
+        if let Some(package_name_os) = package_name_os
             && (arg_as_ref == OsStr::new("-p") || arg_as_ref == OsStr::new("--package"))
-            && iter.peek().map(AsRef::as_ref) == Some(package_name)
+            && iter.peek().map(AsRef::as_ref) == Some(package_name_os)
         {
             let _: Option<&T> = iter.next();
+            args_filtered.extend_from_slice(&[arg_as_ref.to_owned(), package_name_os.to_owned()]);
             continue;
         }
-        if arg_as_ref == OsStr::new("--offline") || arg_as_ref == OsStr::new("--workspace") {
+        if ARGS_INIT.iter().any(|arg| arg_as_ref == OsStr::new(arg)) {
+            args_duplicated.push(arg_as_ref.to_owned());
             continue;
         }
         // smoelius: All arguments besides those covered by the previous bullet are forwarded.
         args_out.push(arg_as_ref.to_owned());
     }
+    if !args_filtered.is_empty() {
+        #[allow(clippy::explicit_write)]
+        writeln!(
+            stderr(),
+            "Warning: {}",
+            filtered_message(package_name, subcommand, &args_filtered, false)
+        )
+        .unwrap();
+    }
+    if !args_duplicated.is_empty() {
+        #[allow(clippy::explicit_write)]
+        writeln!(
+            stderr(),
+            "Warning: {}",
+            filtered_message(package_name, subcommand, &args_duplicated, true)
+        )
+        .unwrap();
+    }
     args_out
+}
+
+fn filtered_message(
+    package_name: Option<&str>,
+    subcommand: &CargoSubcommand,
+    args: &[OsString],
+    duplicated: bool,
+) -> String {
+    let of_package_name = package_name.map_or(String::new(), |package_name| {
+        format!(" of `{package_name}`")
+    });
+    let maybe_why = if duplicated {
+        " because they would be duplicated"
+    } else {
+        ""
+    };
+    format!(
+        "The following arguments were removed from the `cargo {subcommand}` command run on nested \
+         workspaces{of_package_name}{maybe_why}: {}",
+        args.join(OsStr::new(" ")).display()
+    )
 }
 
 #[cfg(test)]

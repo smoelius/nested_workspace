@@ -132,9 +132,6 @@ fn test_completeness() {
 #[test]
 fn test_correctness() {
     for (subdir, args_expected) in SUBDIR_ARGS {
-        if subdir == "before" || subdir == "after" {
-            continue;
-        }
         let path = Path::new("tests/trycmd").join(subdir);
         for result in read_dir_wc(path).unwrap() {
             let entry = result.unwrap();
@@ -142,6 +139,13 @@ fn test_correctness() {
                 continue;
             }
             let path = entry.path();
+
+            assert_argument_warning_wildcards(&path);
+
+            if subdir == "before" || subdir == "after" {
+                continue;
+            }
+
             let file_stem = path.file_stem_wc().unwrap();
             let contents = read_to_string_wc(&path).unwrap();
             let table = toml::from_str::<toml::Table>(&contents).unwrap();
@@ -211,6 +215,20 @@ fn test_correctness() {
             assert_long_running_test_wildcards(subdir, &path);
         }
     }
+}
+
+/// Argument warnings precede nested Cargo commands, which can emit dependency build output.
+/// Keep room for that output with a trailing wildcard or subsequent explicit assertions.
+fn assert_argument_warning_wildcards(path: &Path) {
+    let stdout_path = path.with_extension("stdout");
+    let contents = read_to_string_wc(&stdout_path).unwrap();
+    assert!(
+        !contents.lines().last().is_some_and(|line| {
+            line.contains("cargo::warning=The following arguments were removed")
+        }),
+        "`{}` ends with an argument warning; add `...` to allow subsequent build output",
+        stdout_path.display()
+    );
 }
 
 /// A successful `build` should compile the fixture's root package. Assert that the `.stderr` file

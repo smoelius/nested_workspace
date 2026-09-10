@@ -1,1 +1,3 @@
 [root_and_non_root_packages 0.1.0] [..]
+[root_and_non_root_packages 0.1.0] cargo::warning=The following arguments were removed from the `cargo build` command run on nested workspaces of `root_and_non_root_packages`: -vv --offline
+...

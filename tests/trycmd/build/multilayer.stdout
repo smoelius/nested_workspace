@@ -1,2 +1,5 @@
 [multilayer 0.1.0] [..]
+[multilayer 0.1.0] cargo::warning=The following arguments were removed from the `cargo build` command run on nested workspaces of `multilayer`: -vv --offline
 [multilayer 0.1.0] [single_layer 0.1.0] [..]
+[multilayer 0.1.0] [single_layer 0.1.0] cargo::warning=The following arguments were removed from the `cargo build` command run on nested workspaces of `single_layer`: -vv --offline --workspace
+...
