@@ -7,12 +7,14 @@
 [cycle 0.1.0] Invoking Cargo would deadlock waiting for the current Cargo invocation's build directory lock.
 [cycle 0.1.0] Configure the nested workspace to use a distinct build directory (check `CARGO_TARGET_DIR`, `build.target-dir`, and `build.build-dir`).
 [cycle 0.1.0] note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+warning: cycle@0.1.0: The following arguments were removed from the `cargo build` command run on nested workspaces of `cycle`: -vv --offline
 error: failed to run custom build command for `cycle v0.1.0 ([..]/[PUT]/fixtures/cycle)`
 
 Caused by:
   process didn't exit successfully: `[..] [CWD]/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
   --- stdout
   cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/[PUT].timestamp
+  cargo::warning=The following arguments were removed from the `cargo build` command run on nested workspaces of `cycle`: -vv --offline
 
   --- stderr
 

@@ -5,8 +5,10 @@
 <<< [CWD]/workspace
 ...
    Compiling single_layer v0.1.0 ([CWD]/workspace/single_layer)
+warning: single_layer@0.1.0: The following arguments were removed from the `cargo build` command run on nested workspaces of `single_layer`: --offline --workspace
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs (target/debug/[..]/single_layer-[..])
+Warning: The following arguments were removed from the `cargo test` command run on nested workspaces of `single_layer` because they would be duplicated: --offline --workspace
 <<< [CWD]/workspace/single_layer/workspace
 ...
    Compiling package v0.1.0 ([CWD]/workspace/single_layer/workspace/package)

@@ -1,1 +1,3 @@
 [git_dependency 0.1.0] [..]
+[git_dependency 0.1.0] cargo::warning=The following arguments were removed from the `cargo build` command run on nested workspaces of `git_dependency`: -vv --offline
+...

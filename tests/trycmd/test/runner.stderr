@@ -1,8 +1,10 @@
 ...
    Compiling runner v0.1.0 ([CWD])
+warning: runner@0.1.0: The following arguments were removed from the `cargo build` command run on nested workspaces of `runner`: --workspace --config target.'cfg(all())'.runner = 'runner'
     Finished `test` profile [unoptimized + debuginfo] target(s) in [..]s
      Running unittests src/lib.rs (target/debug/[..]/runner-[..])
 running: ["[..]/runner-[..]"]
+Warning: The following arguments were removed from the `cargo test` command run on nested workspaces of `runner` because they would be duplicated: --workspace
 <<< [CWD]/package
 ...
    Compiling package v0.1.0 ([CWD]/package)
