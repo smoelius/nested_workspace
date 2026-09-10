@@ -1,8 +1,8 @@
 use anyhow::{Result, bail, ensure};
 use nested_workspace::{
     Args, CargoSubcommand, ContainingPackage, Delimiter, Source, all_containing_packages,
-    build_cargo_command, parse_cargo_command, parse_cargo_subcommand, run_cargo_command,
-    warn_about_missing_nested_workspaces,
+    build_cargo_command, build_subcommand_and_args, parse_cargo_command, parse_cargo_subcommand,
+    run_cargo_command, warn_about_missing_nested_workspaces,
 };
 use std::{
     env::{args, current_dir},
@@ -43,11 +43,17 @@ fn main() -> Result<()> {
     };
 
     // smoelius: Run on current package or workspace.
-    let mut command = build_cargo_command(
+    let (subcommand_osstr, args) = build_subcommand_and_args(
         Source::CargoNested,
         None,
         &subcommand,
         &Args::inherited(inherited_args),
+    )?;
+    let mut command = build_cargo_command(
+        Source::CargoNested,
+        None::<&str>,
+        subcommand_osstr,
+        &args,
         false,
     )?;
     let status = command.status()?;
@@ -148,13 +154,19 @@ fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
         return Ok(());
     }
     for containing_package in &containing_packages {
+        let (subcommand_osstr, args) = build_subcommand_and_args(
+            Source::CargoNested,
+            Some(&containing_package.name),
+            subcommand,
+            &Args::inherited(inherited_args),
+        )?;
         for root in &containing_package.roots {
             let _delimiter = Delimiter::new(root.path());
             let command = build_cargo_command(
                 Source::CargoNested,
                 Some(&containing_package.name),
-                subcommand,
-                &Args::inherited(inherited_args),
+                subcommand_osstr,
+                &args,
                 root.dependent(),
             )?;
             run_cargo_command(Source::CargoNested, root, command)?;

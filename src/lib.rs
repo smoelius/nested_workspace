@@ -22,7 +22,8 @@ mod cargo_nested;
 mod command;
 use command::parent_cargo_command;
 pub use command::{
-    Args, CargoSubcommand, build_cargo_command, parse_cargo_command, parse_cargo_subcommand,
+    Args, CargoSubcommand, build_cargo_command, build_subcommand_and_args, parse_cargo_command,
+    parse_cargo_subcommand,
 };
 
 mod reentrancy_guard;
@@ -188,6 +189,15 @@ impl Builder {
             warn_about_missing_nested_workspaces(None, false)?;
             return Ok(());
         }
+        let (subcommand_osstr, args) = build_subcommand_and_args(
+            self.source,
+            Some(&containing_package.name),
+            &subcommand,
+            &Args {
+                explicit: &self.args,
+                inherited: inherited_args,
+            },
+        )?;
         for root in &containing_package.roots {
             if matches!(self.source, Source::BuildScript)
                 && nested_workspace_uses_current_build_directory(&root.path)?
@@ -232,29 +242,16 @@ impl Builder {
                 );
             }
             let _delimiter = Delimiter::new(&root.path);
-            let command = self.cargo_command(
+            let command = build_cargo_command(
+                self.source,
                 Some(&containing_package.name),
-                &subcommand,
-                inherited_args,
+                subcommand_osstr,
+                &args,
                 root.dependent(),
             )?;
             run_cargo_command(self.source, root, command)?;
         }
         Ok(())
-    }
-
-    fn cargo_command(
-        &self,
-        package_name: Option<&str>,
-        subcommand: &CargoSubcommand,
-        inherited_args: &[OsString],
-        dependent: bool,
-    ) -> Result<Command> {
-        let args = Args {
-            explicit: &self.args,
-            inherited: inherited_args,
-        };
-        build_cargo_command(self.source, package_name, subcommand, &args, dependent)
     }
 }
 
