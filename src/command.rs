@@ -121,61 +121,6 @@ pub fn parse_cargo_subcommand<T: AsRef<OsStr> + Debug>(
     Ok((subcommand, &args[1..]))
 }
 
-/// Explicit arguments supplied by a builder and arguments inherited from a parent Cargo invocation.
-#[doc(hidden)]
-pub struct Args<'a, T: AsRef<OsStr>> {
-    pub explicit: &'a [T],
-    pub inherited: &'a [T],
-}
-
-impl<'a, T: AsRef<OsStr>> Args<'a, T> {
-    /// Creates an argument set containing only inherited arguments.
-    pub fn inherited(inherited: &'a [T]) -> Self {
-        Self {
-            explicit: &[],
-            inherited,
-        }
-    }
-}
-
-/// Prepares the Cargo subcommand and its arguments according to the invocation source. Emits
-/// warnings for inherited arguments removed by filtering or deduplication.
-fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
-    source: Source,
-    package_name: Option<&str>,
-    subcommand: &'subcommand CargoSubcommand,
-    args: &Args<'_, T>,
-) -> Result<(&'subcommand OsStr, Vec<OsString>)> {
-    let (subcommand, args) = match (&source, &subcommand) {
-        // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
-        // running `cargo build` would be too much). For all other cases, run `cargo build`.
-        (Source::BuildScript, CargoSubcommand::Check) => (
-            OsStr::new("check"),
-            build_or_check_args(package_name, subcommand, args),
-        ),
-        (Source::BuildScript, _subcommand_other_than_check) => (
-            OsStr::new("build"),
-            build_or_check_args(package_name, &CargoSubcommand::Build, args),
-        ),
-        (Source::Test, CargoSubcommand::Test) => (
-            OsStr::new("test"),
-            test_args(package_name, subcommand, args),
-        ),
-        // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
-        // accept such an option. `cargo fmt` is an example.
-        (Source::CargoNested, _) => {
-            assert!(
-                args.explicit.is_empty(),
-                "`cargo-nested` should not use explicit arguments"
-            );
-            let args = args.inherited.iter().map(OsString::from).collect();
-            (subcommand.as_os_str(), args)
-        }
-        (_, _) => bail!("{source} unexpectedly invoked subcommand `{subcommand}`"),
-    };
-    Ok((subcommand, args))
-}
-
 /// A Cargo command whose subcommand and arguments have been prepared for reuse across nested
 /// workspace roots.
 #[doc(hidden)]
@@ -243,6 +188,61 @@ impl<'a> NestedWorkspaceCommand<'a> {
         }
         Ok(command)
     }
+}
+
+/// Explicit arguments supplied by a builder and arguments inherited from a parent Cargo invocation.
+#[doc(hidden)]
+pub struct Args<'a, T: AsRef<OsStr>> {
+    pub explicit: &'a [T],
+    pub inherited: &'a [T],
+}
+
+impl<'a, T: AsRef<OsStr>> Args<'a, T> {
+    /// Creates an argument set containing only inherited arguments.
+    pub fn inherited(inherited: &'a [T]) -> Self {
+        Self {
+            explicit: &[],
+            inherited,
+        }
+    }
+}
+
+/// Prepares the Cargo subcommand and its arguments according to the invocation source. Emits
+/// warnings for inherited arguments removed by filtering or deduplication.
+fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
+    source: Source,
+    package_name: Option<&str>,
+    subcommand: &'subcommand CargoSubcommand,
+    args: &Args<'_, T>,
+) -> Result<(&'subcommand OsStr, Vec<OsString>)> {
+    let (subcommand, args) = match (&source, &subcommand) {
+        // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
+        // running `cargo build` would be too much). For all other cases, run `cargo build`.
+        (Source::BuildScript, CargoSubcommand::Check) => (
+            OsStr::new("check"),
+            build_or_check_args(package_name, subcommand, args),
+        ),
+        (Source::BuildScript, _subcommand_other_than_check) => (
+            OsStr::new("build"),
+            build_or_check_args(package_name, &CargoSubcommand::Build, args),
+        ),
+        (Source::Test, CargoSubcommand::Test) => (
+            OsStr::new("test"),
+            test_args(package_name, subcommand, args),
+        ),
+        // smoelius: Do not pass `--workspace` to all Cargo subcommands, because not all subcommands
+        // accept such an option. `cargo fmt` is an example.
+        (Source::CargoNested, _) => {
+            assert!(
+                args.explicit.is_empty(),
+                "`cargo-nested` should not use explicit arguments"
+            );
+            let args = args.inherited.iter().map(OsString::from).collect();
+            (subcommand.as_os_str(), args)
+        }
+        (_, _) => bail!("{source} unexpectedly invoked subcommand `{subcommand}`"),
+    };
+    Ok((subcommand, args))
 }
 
 fn build_or_check_args<T: AsRef<OsStr>>(
