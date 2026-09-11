@@ -81,6 +81,13 @@ fn fixtures_are_unpublishable() {
     }
 }
 
+#[test]
+fn fmt() {
+    let mut command = Command::new("cargo");
+    command.args(["+nightly", "fmt", "--check"]);
+    command.assert().success();
+}
+
 #[cfg_attr(target_os = "windows", ignore = "`markdown_link_check` not installed")]
 #[test]
 fn markdown_link_check() {
