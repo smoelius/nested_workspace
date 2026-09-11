@@ -13,7 +13,6 @@ use std::{
     fs::OpenOptions,
     io::{ErrorKind, Write, stderr},
     path::{Path, PathBuf},
-    process::Command,
     time::SystemTime,
 };
 
@@ -242,14 +241,13 @@ impl Builder {
                 );
             }
             let _delimiter = Delimiter::new(&root.path);
-            let command = build_cargo_command(
+            build_and_run_cargo_command(
                 self.source,
                 Some(&containing_package.name),
                 subcommand_osstr,
                 &args,
-                root.dependent(),
+                Some(root),
             )?;
-            run_cargo_command(self.source, root, command)?;
         }
         Ok(())
     }
@@ -354,13 +352,27 @@ pub fn warn_about_missing_nested_workspaces(
     Ok(())
 }
 
+/// Builds and runs a Cargo command with prepared arguments, returning an error if it fails.
+/// Uses the nested workspace's root directory when supplied, otherwise inherits the current
+/// directory.
 #[doc(hidden)]
-pub fn run_cargo_command(
+pub fn build_and_run_cargo_command(
     source: Source,
-    root: &NestedWorkspaceRoot,
-    mut command: Command,
+    package_name: Option<&str>,
+    subcommand: &OsStr,
+    args: &[OsString],
+    root: Option<&NestedWorkspaceRoot>,
 ) -> Result<()> {
-    command.current_dir(&root.path);
+    let mut command = build_cargo_command(
+        source,
+        package_name,
+        subcommand,
+        args,
+        root.is_some_and(NestedWorkspaceRoot::dependent),
+    )?;
+    if let Some(root) = root {
+        command.current_dir(&root.path);
+    }
     debug!("{source}: {command:?}");
     let status = command.status_wc()?;
     ensure!(status.success(), "command failed: {command:?}");
