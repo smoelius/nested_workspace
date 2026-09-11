@@ -140,6 +140,7 @@ fn test_correctness() {
             }
             let path = entry.path();
 
+            assert_nested_command_wildcards(&path);
             assert_argument_warning_wildcards(&path);
 
             if subdir == "before" || subdir == "after" {
@@ -211,8 +212,25 @@ fn test_correctness() {
             );
 
             assert_build_compiling_prefix(subdir, file_stem, &path, &table);
-            assert_nested_command_wildcards(subdir, &path);
             assert_long_running_test_wildcards(subdir, &path);
+        }
+    }
+}
+
+/// Cargo can emit incidental messages, such as lock waits, after the marker for a nested command.
+/// Require a wildcard there so such messages do not make the snapshot flaky.
+fn assert_nested_command_wildcards(path: &Path) {
+    let stderr_path = path.with_extension("stderr");
+    let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
+    let mut lines = stderr_contents.lines();
+    while let Some(line) = lines.next() {
+        if line.starts_with("<<< ") {
+            assert_eq!(
+                Some("..."),
+                lines.next(),
+                "`{}` does not have `...` after `{line}`",
+                stderr_path.display()
+            );
         }
     }
 }
@@ -273,26 +291,6 @@ fn assert_build_compiling_prefix(
 
 fn containing_and_dependent_file_stems(file_stem: &OsStr) -> Option<(&str, &str)> {
     file_stem.to_str_wc().unwrap().rsplit_once("__")
-}
-
-/// Cargo can emit incidental messages, such as lock waits, after the marker for a nested command.
-/// Require a wildcard there so such messages do not make the snapshot flaky.
-fn assert_nested_command_wildcards(subdir: &str, path: &Path) {
-    if matches!(subdir, "check" | "build" | "test") {
-        let stderr_path = path.with_extension("stderr");
-        let stderr_contents = read_to_string_wc(&stderr_path).unwrap();
-        let mut lines = stderr_contents.lines();
-        while let Some(line) = lines.next() {
-            if line.starts_with("<<< ") {
-                assert_eq!(
-                    Some("..."),
-                    lines.next(),
-                    "`{}` does not have `...` after `{line}`",
-                    stderr_path.display()
-                );
-            }
-        }
-    }
 }
 
 /// Libtest can emit a long-running test notification while a test is still running. Require a
