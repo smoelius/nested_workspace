@@ -1,8 +1,8 @@
 use anyhow::{Result, bail};
 use nested_workspace::{
-    Args, CargoSubcommand, ContainingPackage, Delimiter, Source, all_containing_packages,
-    build_and_run_cargo_command, build_subcommand_and_args, parse_cargo_command,
-    parse_cargo_subcommand, warn_about_missing_nested_workspaces,
+    Args, CargoSubcommand, ContainingPackage, Delimiter, NestedWorkspaceCommand, Source,
+    all_containing_packages, parse_cargo_command, parse_cargo_subcommand,
+    warn_about_missing_nested_workspaces,
 };
 use std::{
     env::{args, current_dir},
@@ -43,13 +43,13 @@ fn main() -> Result<()> {
     };
 
     // smoelius: Run on current package or workspace.
-    let (subcommand_osstr, args) = build_subcommand_and_args(
+    let command = NestedWorkspaceCommand::new(
         Source::CargoNested,
         None,
         &subcommand,
         &Args::inherited(inherited_args),
     )?;
-    build_and_run_cargo_command(Source::CargoNested, None, subcommand_osstr, &args, None)?;
+    command.run(None)?;
 
     // smoelius: Run on all nested workspaces.
     let current_dir = current_dir()?;
@@ -146,7 +146,7 @@ fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
         return Ok(());
     }
     for containing_package in &containing_packages {
-        let (subcommand_osstr, args) = build_subcommand_and_args(
+        let command = NestedWorkspaceCommand::new(
             Source::CargoNested,
             Some(&containing_package.name),
             subcommand,
@@ -154,13 +154,7 @@ fn run_cargo_subcommand_on_all_nested_workspace_roots<T: AsRef<OsStr>>(
         )?;
         for root in &containing_package.roots {
             let _delimiter = Delimiter::new(root.path());
-            build_and_run_cargo_command(
-                Source::CargoNested,
-                Some(&containing_package.name),
-                subcommand_osstr,
-                &args,
-                Some(root),
-            )?;
+            command.run(Some(root))?;
             // smoelius: `cargo nested` is a special case. It must be run manually on each nested
             // workspace root to ensure that _nested_-nested workspaces are handled.
             run_cargo_subcommand_on_all_nested_workspace_roots(
