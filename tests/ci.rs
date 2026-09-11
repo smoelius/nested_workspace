@@ -13,6 +13,7 @@ fn clippy() {
         "clippy",
         "--all-targets",
         "--offline",
+        "--workspace",
         "--",
         "--deny=warnings",
     ]);
