@@ -1,12 +1,10 @@
-use anyhow::{Result, bail, ensure};
+use anyhow::{Result, bail};
 use cargo_metadata::{MetadataCommand, Package};
 use elaborate::std::{
     env::var_wc,
     fs::{FileContext, OpenOptionsContext, write_wc},
-    process::CommandContext,
 };
 use glob::glob;
-use log::debug;
 use serde::Deserialize;
 use std::{
     ffi::{OsStr, OsString},
@@ -21,8 +19,7 @@ mod cargo_nested;
 mod command;
 use command::parent_cargo_command;
 pub use command::{
-    Args, CargoSubcommand, build_cargo_command, build_subcommand_and_args, parse_cargo_command,
-    parse_cargo_subcommand,
+    Args, CargoSubcommand, NestedWorkspaceCommand, parse_cargo_command, parse_cargo_subcommand,
 };
 
 mod reentrancy_guard;
@@ -188,7 +185,7 @@ impl Builder {
             warn_about_missing_nested_workspaces(None, false)?;
             return Ok(());
         }
-        let (subcommand_osstr, args) = build_subcommand_and_args(
+        let command = NestedWorkspaceCommand::new(
             self.source,
             Some(&containing_package.name),
             &subcommand,
@@ -241,13 +238,7 @@ impl Builder {
                 );
             }
             let _delimiter = Delimiter::new(&root.path);
-            build_and_run_cargo_command(
-                self.source,
-                Some(&containing_package.name),
-                subcommand_osstr,
-                &args,
-                Some(root),
-            )?;
+            command.run(Some(root))?;
         }
         Ok(())
     }
@@ -349,33 +340,6 @@ pub fn warn_about_missing_nested_workspaces(
         let in_dir = dir.map_or_else(String::new, |dir| format!(" in `{}`", dir.display()));
         writeln!(stderr(), "Warning: found no nested workspaces{in_dir}")?;
     }
-    Ok(())
-}
-
-/// Builds and runs a Cargo command with prepared arguments, returning an error if it fails.
-/// Uses the nested workspace's root directory when supplied, otherwise inherits the current
-/// directory.
-#[doc(hidden)]
-pub fn build_and_run_cargo_command(
-    source: Source,
-    package_name: Option<&str>,
-    subcommand: &OsStr,
-    args: &[OsString],
-    root: Option<&NestedWorkspaceRoot>,
-) -> Result<()> {
-    let mut command = build_cargo_command(
-        source,
-        package_name,
-        subcommand,
-        args,
-        root.is_some_and(NestedWorkspaceRoot::dependent),
-    )?;
-    if let Some(root) = root {
-        command.current_dir(&root.path);
-    }
-    debug!("{source}: {command:?}");
-    let status = command.status_wc()?;
-    ensure!(status.success(), "command failed: {command:?}");
     Ok(())
 }
 

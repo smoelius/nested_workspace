@@ -1,10 +1,11 @@
 use crate::{
-    Source,
+    NestedWorkspaceRoot, Source,
     cargo_nested::CARGO_NESTED_ENV,
     reentrancy_guard::{dependent_from_package_name, reentrancy_guard_from_package_name},
 };
-use anyhow::{Result, bail};
-use elaborate::std::{ffi::OsStrContext, path::PathContext};
+use anyhow::{Result, bail, ensure};
+use elaborate::std::{ffi::OsStrContext, path::PathContext, process::CommandContext};
+use log::debug;
 use std::{
     ffi::{OsStr, OsString},
     fmt::Debug,
@@ -135,8 +136,7 @@ impl<'a, T: AsRef<OsStr>> Args<'a, T> {
     }
 }
 
-#[doc(hidden)]
-pub fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
+fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
     source: Source,
     package_name: Option<&str>,
     subcommand: &'subcommand CargoSubcommand,
@@ -172,46 +172,73 @@ pub fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
     Ok((subcommand, args))
 }
 
-/// Builds a Cargo command to run on a nested workspace or, for the initial `cargo nested`
-/// invocation, the current package or workspace.
+/// A Cargo command whose subcommand and arguments have been prepared for reuse across nested
+/// workspace roots.
 #[doc(hidden)]
-pub fn build_cargo_command<N, T, I, S>(
+pub struct NestedWorkspaceCommand<'a> {
     source: Source,
-    package_name: Option<N>,
-    subcommand: T,
-    args: I,
-    dependent: bool,
-) -> Result<Command>
-where
-    N: AsRef<str>,
-    T: AsRef<OsStr>,
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let mut command = Command::new("cargo");
-    command.arg(subcommand);
-    command.args(args);
-    command.env_remove("CARGO");
-    command.env_remove("RUSTC");
-    command.env_remove("RUSTUP_TOOLCHAIN");
-    match source {
-        Source::CargoNested => {
-            command.env(CARGO_NESTED_ENV, "1");
-        }
-        Source::BuildScript => {
-            let Some(package_name) = package_name else {
-                bail!("failed to get package name");
-            };
-            let reentrancy_guard = reentrancy_guard_from_package_name(&package_name);
-            command.env(reentrancy_guard, "1");
-            if dependent {
-                let dependent = dependent_from_package_name(package_name);
-                command.env(dependent, "1");
-            }
-        }
-        Source::Test => {}
+    package_name: Option<&'a str>,
+    subcommand: &'a OsStr,
+    args: Vec<OsString>,
+}
+
+impl<'a> NestedWorkspaceCommand<'a> {
+    /// Prepares the subcommand and arguments once, emitting any filtering or duplication warnings.
+    pub fn new<T: AsRef<OsStr>>(
+        source: Source,
+        package_name: Option<&'a str>,
+        subcommand: &'a CargoSubcommand,
+        args: &Args<'_, T>,
+    ) -> Result<Self> {
+        let (subcommand, args) = build_subcommand_and_args(source, package_name, subcommand, args)?;
+        Ok(Self {
+            source,
+            package_name,
+            subcommand,
+            args,
+        })
     }
-    Ok(command)
+
+    /// Builds and runs the prepared command, returning an error if it fails.
+    pub fn run(&self, root: Option<&NestedWorkspaceRoot>) -> Result<()> {
+        let mut command = self.build_command(root)?;
+        debug!("{}: {command:?}", self.source);
+        let status = command.status_wc()?;
+        ensure!(status.success(), "command failed: {command:?}");
+        Ok(())
+    }
+
+    /// Builds a command for the supplied nested workspace root, or for the current directory if
+    /// none is given.
+    fn build_command(&self, root: Option<&NestedWorkspaceRoot>) -> Result<Command> {
+        let mut command = Command::new("cargo");
+        command.arg(self.subcommand);
+        command.args(&self.args);
+        command.env_remove("CARGO");
+        command.env_remove("RUSTC");
+        command.env_remove("RUSTUP_TOOLCHAIN");
+        match self.source {
+            Source::CargoNested => {
+                command.env(CARGO_NESTED_ENV, "1");
+            }
+            Source::BuildScript => {
+                let Some(package_name) = self.package_name else {
+                    bail!("failed to get package name");
+                };
+                let reentrancy_guard = reentrancy_guard_from_package_name(package_name);
+                command.env(reentrancy_guard, "1");
+                if root.is_some_and(NestedWorkspaceRoot::dependent) {
+                    let dependent = dependent_from_package_name(package_name);
+                    command.env(dependent, "1");
+                }
+            }
+            Source::Test => {}
+        }
+        if let Some(root) = root {
+            command.current_dir(root.path());
+        }
+        Ok(command)
+    }
 }
 
 fn build_or_check_args<T: AsRef<OsStr>>(
@@ -362,7 +389,11 @@ mod tests {
                 ),
             ];
             for (args_in, args_expected) in args_in_and_expected {
-                let (subcommand_actual, args_actual) = build_subcommand_and_args(
+                let NestedWorkspaceCommand {
+                    subcommand: subcommand_actual,
+                    args: args_actual,
+                    ..
+                } = NestedWorkspaceCommand::new(
                     Source::BuildScript,
                     Some("package"),
                     &subcommand,
@@ -386,7 +417,11 @@ mod tests {
             (CargoSubcommand::Check, "check"),
         ] {
             for flag in ["--frozen", "--locked"] {
-                let (subcommand_actual, args) = build_subcommand_and_args(
+                let NestedWorkspaceCommand {
+                    subcommand: subcommand_actual,
+                    args,
+                    ..
+                } = NestedWorkspaceCommand::new(
                     Source::BuildScript,
                     Some("package"),
                     &subcommand,
@@ -417,7 +452,11 @@ mod tests {
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
         ] {
-            let (subcommand_actual, args) = build_subcommand_and_args(
+            let NestedWorkspaceCommand {
+                subcommand: subcommand_actual,
+                args,
+                ..
+            } = NestedWorkspaceCommand::new(
                 Source::BuildScript,
                 Some("package"),
                 &subcommand,
@@ -448,7 +487,11 @@ mod tests {
             (CargoSubcommand::Build, "build"),
             (CargoSubcommand::Check, "check"),
         ] {
-            let (subcommand_actual, args) = build_subcommand_and_args(
+            let NestedWorkspaceCommand {
+                subcommand: subcommand_actual,
+                args,
+                ..
+            } = NestedWorkspaceCommand::new(
                 Source::BuildScript,
                 Some("package"),
                 &subcommand,
@@ -481,7 +524,9 @@ mod tests {
             &["--workspace", "--", "--nocapture"],
         ];
         for args_in in ARGS_IN {
-            let (subcommand, args) = build_subcommand_and_args(
+            let NestedWorkspaceCommand {
+                subcommand, args, ..
+            } = NestedWorkspaceCommand::new(
                 Source::Test,
                 None,
                 &CargoSubcommand::Test,
@@ -504,7 +549,9 @@ mod tests {
 
     #[test]
     fn test_prepends_explicit_args_to_inherited_args() {
-        let (subcommand, args) = build_subcommand_and_args(
+        let NestedWorkspaceCommand {
+            subcommand, args, ..
+        } = NestedWorkspaceCommand::new(
             Source::Test,
             None,
             &CargoSubcommand::Test,
