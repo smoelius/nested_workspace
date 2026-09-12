@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0
+
+- FEATURE: Warn about filtered and duplicate inherited arguments ([caa1940](https://github.com/smoelius/nested_workspace/commit/caa1940085d3b523b42631e3ac4d7ac23006cb65))
+
 ## 3.0.0
 
 - Expand documentation with "Environment variable handling" and "Other uses of `cargo check`" sections ([64df967](https://github.com/smoelius/nested_workspace/commit/64df967d37eac8c2c86455d11540ba0916074351))
