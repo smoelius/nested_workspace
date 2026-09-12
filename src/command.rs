@@ -210,8 +210,8 @@ fn build_or_check_args<T: AsRef<OsStr>>(args: &Args<'_, T>) -> Vec<OsString> {
     args_out.extend(args.explicit.iter().map(OsString::from));
     for arg in args.inherited {
         // smoelius: The following arguments are forwarded provided they were not already passed
-        // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`. (Cargo rejects repeated
-        // occurrences of either option.)
+        // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`. (Cargo rejects
+        // repeated occurrences of either option.)
         let arg_as_ref = arg.as_ref();
         if (arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked"))
             && !args_out
