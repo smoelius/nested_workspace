@@ -1,7 +1,11 @@
 use assert_cmd::assert::OutputAssertExt;
+use cargo_metadata::{
+    Dependency, Metadata, MetadataCommand,
+    semver::{Op, Version, VersionReq},
+};
 use elaborate::std::{fs::read_to_string_wc, path::PathContext, process::CommandContext};
 use regex::Regex;
-use std::{ffi::OsStr, path::Path, process::Command};
+use std::{ffi::OsStr, path::Path, process::Command, sync::LazyLock};
 use tempfile::tempdir;
 use walkdir::WalkDir;
 
@@ -139,4 +143,53 @@ fn readme_reference_links_are_sorted() {
 #[test]
 fn supply_chain() {
     supply_chain::check("tests/supply_chain.json");
+}
+
+static METADATA: LazyLock<Metadata> =
+    LazyLock::new(|| MetadataCommand::new().no_deps().exec().unwrap());
+
+#[test]
+fn versions_are_equal() {
+    for package in &METADATA.packages {
+        if ["dir-entry-ext", "nested_workspace_example", "runner"].contains(&package.name.as_str())
+        {
+            continue;
+        }
+        assert_eq!(
+            env!("CARGO_PKG_VERSION"),
+            package.version.to_string(),
+            "{}",
+            package.name
+        );
+    }
+}
+
+#[test]
+fn versions_are_exact_and_match() {
+    for package in &METADATA.packages {
+        for Dependency { name: dep, req, .. } in &package.dependencies {
+            if dep == "nested_workspace" {
+                assert!(
+                    req.comparators.is_empty() || is_exact(req),
+                    "`{}` dependency on `{dep}` is not exact",
+                    package.name
+                );
+                assert!(
+                    req.matches(&Version::parse(env!("CARGO_PKG_VERSION")).unwrap()),
+                    "`{}` dependency on `{dep}` does not match `{}`",
+                    package.name,
+                    env!("CARGO_PKG_VERSION"),
+                );
+            }
+        }
+    }
+}
+
+/// Determines whether `req` is an exact requirement.
+fn is_exact(req: &VersionReq) -> bool {
+    req.comparators
+        .iter()
+        .map(|comparator| comparator.op)
+        .collect::<Vec<_>>()
+        == [Op::Exact]
 }
