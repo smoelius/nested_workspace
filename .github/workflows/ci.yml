@@ -81,7 +81,6 @@ jobs:
           cargo install cargo-dylint dylint-link         || true
           cargo install cargo-msrv --no-default-features || true
           cargo install cargo-supply-chain               || true
-          cargo install unset                            || true
 
       - name: Build
         run: cargo build --workspace --all-targets
@@ -90,11 +89,17 @@ jobs:
         env:
           # Limit `trycmd` concurrency on Windows. Its cases invoke Cargo in parallel, which can
           # otherwise cause enough contention to trigger libtest's 60-second status message.
+          # RAYON_NUM_THREADS=0 means use Rayon's default thread count, currently based on available
+          # logical CPUs.
           RAYON_NUM_THREADS: ${{ runner.os == 'Windows' && '1' || '0' }}
-        run: cargo test --workspace --exclude nested_workspace_example --config "target.'cfg(all())'.runner = 'unset'" -- --nocapture
+        run: |
+          unset CARGO_TERM_COLOR
+          cargo test --workspace --exclude nested_workspace_example -- --nocapture
 
       - name: Test example
-        run: cargo test -p nested_workspace_example -- --nocapture
+        run: |
+          unset CARGO_TERM_COLOR
+          cargo test -p nested_workspace_example -- --nocapture
 
   all-checks:
     needs: [determine-environments, test]
