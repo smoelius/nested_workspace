@@ -250,9 +250,9 @@ fn build_or_check_args<T: AsRef<OsStr>>(
     subcommand: &CargoSubcommand,
     args: &Args<'_, T>,
 ) -> Vec<OsString> {
-    // smoelius: The following arguments are prepended to the arguments passed: `-vv`, `--offline`,
-    // and `--workspace`.
-    let mut args_out = ["-vv", "--offline", "--workspace"]
+    // smoelius: The following arguments are prepended to the arguments passed: `--offline` and
+    // `--workspace`.
+    let mut args_out = ["--offline", "--workspace"]
         .iter()
         .map(OsString::from)
         .collect::<Vec<_>>();
@@ -260,11 +260,11 @@ fn build_or_check_args<T: AsRef<OsStr>>(
     let mut args_duplicated = Vec::new();
     let mut args_filtered = Vec::new();
     for arg in args.inherited {
-        // smoelius: The following arguments are forwarded provided they were not already passed
-        // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`. (Cargo rejects
-        // repeated occurrences of either option.)
         let arg_as_ref = arg.as_ref();
         if arg_as_ref == OsStr::new("--frozen") || arg_as_ref == OsStr::new("--locked") {
+            // smoelius: The following arguments are forwarded provided they were not already passed
+            // with `Builder::arg` or `Builder::args`: `--frozen` and `--locked`. (Cargo rejects
+            // repeated occurrences of either option.)
             if args_out
                 .iter()
                 .any(|arg_out| arg_out.as_os_str() == arg_as_ref)
@@ -273,11 +273,16 @@ fn build_or_check_args<T: AsRef<OsStr>>(
             } else {
                 args_out.push(arg_as_ref.to_owned());
             }
+        } else if is_short_verbose(arg_as_ref) || arg_as_ref == OsStr::new("--verbose") {
+            // smoelius: The following arguments are forwarded regardless of whether they were
+            // already passed with `Builder::arg` or `Builder::args`: `-v`, `-vv`, etc., and
+            // `--verbose`.
+            args_out.push(arg_as_ref.to_owned());
         } else {
-            // smoelius: All arguments besides those covered by the previous bullet are filtered
-            // out, i.e., no other arguments are forwarded. Do not forward other `args`
-            // to `cargo build` or `cargo check`. If `args` contains `--manifest-path
-            // ...`, for example, the command could block.
+            // smoelius: All arguments besides those covered by the previous two bullets are
+            // filtered out, i.e., no other arguments are forwarded. Do not forward other `args` to
+            // `cargo build` or `cargo check`. If `args` contains `--manifest-path ...`, for
+            // example, the command could block.
             args_filtered.push(arg_as_ref.to_owned());
         }
     }
@@ -294,6 +299,13 @@ fn build_or_check_args<T: AsRef<OsStr>>(
         );
     }
     args_out
+}
+
+fn is_short_verbose(arg: &OsStr) -> bool {
+    let [b'-', rest @ ..] = arg.as_encoded_bytes() else {
+        return false;
+    };
+    !rest.is_empty() && rest.iter().all(|&x| x == b'v')
 }
 
 fn test_args<T: AsRef<OsStr>>(
@@ -385,11 +397,11 @@ mod tests {
             let args_in_and_expected: &[(&[&str], &[&str])] = &[
                 (
                     &["--frozen", "--release"],
-                    &["-vv", "--offline", "--workspace", "--frozen"],
+                    &["--offline", "--workspace", "--frozen"],
                 ),
                 (
                     &["--locked", "--release"],
-                    &["-vv", "--offline", "--workspace", "--locked"],
+                    &["--offline", "--workspace", "--locked"],
                 ),
             ];
             for (args_in, args_expected) in args_in_and_expected {
@@ -439,7 +451,6 @@ mod tests {
                 assert_eq!(OsStr::new(subcommand_expected), subcommand_actual);
                 assert_eq!(
                     [
-                        OsStr::new("-vv"),
                         OsStr::new("--offline"),
                         OsStr::new("--workspace"),
                         OsStr::new(flag),
@@ -474,7 +485,6 @@ mod tests {
             assert_eq!(OsStr::new(subcommand_expected), subcommand_actual);
             assert_eq!(
                 [
-                    OsStr::new("-vv"),
                     OsStr::new("--offline"),
                     OsStr::new("--workspace"),
                     OsStr::new("--locked"),
@@ -509,13 +519,63 @@ mod tests {
             assert_eq!(OsStr::new(subcommand_expected), subcommand_actual);
             assert_eq!(
                 [
-                    OsStr::new("-vv"),
                     OsStr::new("--offline"),
                     OsStr::new("--workspace"),
                     OsStr::new("--release"),
                     OsStr::new("--locked"),
                 ],
                 args.as_slice(),
+            );
+        }
+    }
+
+    #[test]
+    fn build_and_check_forward_verbose_args_unconditionally() {
+        for subcommand in [CargoSubcommand::Build, CargoSubcommand::Check] {
+            for inherited in [
+                vec!["-v"],
+                vec!["-vv"],
+                vec!["-vvv"],
+                vec!["--verbose"],
+                vec!["-v", "--verbose"],
+                vec!["--verbose", "-v"],
+            ] {
+                for explicit in [vec![], vec!["-v"], inherited.clone()] {
+                    let NestedWorkspaceCommand { args, .. } = NestedWorkspaceCommand::new(
+                        Source::BuildScript,
+                        Some("package"),
+                        &subcommand,
+                        &Args {
+                            explicit: &explicit,
+                            inherited: &inherited,
+                        },
+                    )
+                    .unwrap();
+                    let args_expected = ["--offline", "--workspace"]
+                        .into_iter()
+                        .chain(explicit.iter().copied())
+                        .chain(inherited.iter().copied())
+                        .map(OsString::from)
+                        .collect::<Vec<_>>();
+                    assert_eq!(args_expected, args);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn build_and_check_filter_non_verbose_args() {
+        for subcommand in [CargoSubcommand::Build, CargoSubcommand::Check] {
+            let NestedWorkspaceCommand { args, .. } = NestedWorkspaceCommand::new(
+                Source::BuildScript,
+                Some("package"),
+                &subcommand,
+                &Args::inherited(&["-", "--", "-vq", "-verbose", "--verbose=true"]),
+            )
+            .unwrap();
+            assert_eq!(
+                [OsString::from("--offline"), OsString::from("--workspace")],
+                args.as_slice()
             );
         }
     }
