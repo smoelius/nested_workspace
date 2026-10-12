@@ -105,14 +105,15 @@ Arguments specified with [`Builder::arg`] or [`Builder::args`] are inserted unch
 
 ### `cargo build` and `cargo check`
 
-- The following arguments are prepended to the arguments passed: `-vv`, `--offline`, and `--workspace`.
-  - `-vv` aids in debugging.
+- The following arguments are prepended to the arguments passed: `--offline` and `--workspace`.
   - `--offline` helps to avoid deadlocks (see [Potential deadlocks] below).
   - `--workspace` ensures all packages in a nested workspace are built/checked, even if a nested workspace contains a root package.
 
 - The following arguments are forwarded provided they were not already passed with [`Builder::arg`] or [`Builder::args`]: `--frozen` and `--locked`. (Cargo rejects repeated occurrences of either option.)
 
-- All arguments besides those covered by the previous bullet are filtered out, i.e., no other arguments are forwarded.
+- The following arguments are forwarded regardless of whether they were already passed with [`Builder::arg`] or [`Builder::args`]: `-v`, `-vv`, etc., and `--verbose`.
+
+- All arguments besides those covered by the previous two bullets are filtered out, i.e., no other arguments are forwarded.
 
 ### `cargo test`
 

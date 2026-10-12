@@ -28,5 +28,5 @@ Caused by:
   >>> [CWD]/dependent
 
   thread 'main' ([..]) panicked at [..]/[PUT]/src/lib.rs:[..]:[..]:
-  called `Result::unwrap()` on an `Err` value: command failed:[..] "cargo" "build" "-vv" "--offline" "--workspace"
+  called `Result::unwrap()` on an `Err` value: command failed:[..] "cargo" "build" "--offline" "--workspace" "-vv"
   note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
