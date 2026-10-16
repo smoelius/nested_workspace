@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.1
+
+- Forward `-v`, `-vv`, etc., and `--verbose` rather than passing them unconditionally to commands run on nested workspaces. Passing `-vv` was meant to aid in debugging. Hence, we consider this a non-breaking change. ([1d3808f](https://github.com/smoelius/nested_workspace/commit/1d3808fcf92d2e43309e4480c3f025f7e81f0dbb))
+
 ## 3.1.0
 
 - FEATURE: Warn about filtered and duplicate inherited arguments ([caa1940](https://github.com/smoelius/nested_workspace/commit/caa1940085d3b523b42631e3ac4d7ac23006cb65))
