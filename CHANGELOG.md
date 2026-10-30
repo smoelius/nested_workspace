@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.0
+
+- Publish signed binaries ([5879b45](https://github.com/smoelius/nested_workspace/commit/5879b45b0795ef211d931bf818c86c42ee14b68d))
+- Dependency updates
+  - `sysinfo` upgraded to version 0.40
+
 ## 3.1.1
 
 - Forward `-v`, `-vv`, etc., and `--verbose` rather than passing them unconditionally to commands run on nested workspaces. Passing `-vv` was meant to aid in debugging. Hence, we consider this a non-breaking change. ([1d3808f](https://github.com/smoelius/nested_workspace/commit/1d3808fcf92d2e43309e4480c3f025f7e81f0dbb))
