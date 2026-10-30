@@ -1,0 +1,192 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+# smoelius: Please keep keys ordered as follows when defining jobs:
+#
+# - name
+# - needs (optional)
+# - environment (optional)
+# - outputs (optional)
+# - permissions
+# - strategy (optional)
+# - runs-on
+# - steps
+#
+# Note that, ignoring `needs` and `strategy`, the keys are in alphabetical order.
+# - `needs` is an exception because it expresses dependencies between jobs.
+# - `strategy` is an exception because `runs-on` often relies on `strategy.matrix`.
+
+jobs:
+  build-binaries:
+    name: Build binaries (${{ matrix.target }})
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build binaries
+        run: cargo build --locked --release --target ${{ matrix.target }} -p cargo-nested
+
+      - name: Package binaries
+        shell: bash
+        run: |
+          set -u
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          BINARIES="cargo-nested"
+
+          for BINARY in $BINARIES; do
+            PACKAGE_NAME="${BINARY}-${{ matrix.target }}-v${VERSION}"
+            mkdir -p "${PACKAGE_NAME}"
+            cp "target/${{ matrix.target }}/release/${BINARY}" "${PACKAGE_NAME}/"
+
+            ARCHIVE="${PACKAGE_NAME}.tar.gz"
+            tar -czf "${ARCHIVE}" "${PACKAGE_NAME}"
+            openssl dgst -sha256 "${ARCHIVE}" > "${ARCHIVE}.sha256"
+          done
+
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: binaries-${{ matrix.target }}
+          path: |
+            cargo-nested-${{ matrix.target }}-v*.tar.gz
+            cargo-nested-${{ matrix.target }}-v*.tar.gz.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: build-binaries
+    environment: release
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: taiki-e/install-action@v2.87.30
+        with:
+          tool: rsign2
+          fallback: cargo-install
+
+      - name: Sign binary artifacts
+        shell: bash
+        run: |
+          set -u
+
+          MANIFESTS="cargo-nested/Cargo.toml"
+          trap 'rm -f minisign.key minisign.pub' EXIT
+
+          rsign generate -f -W -p minisign.pub -s minisign.key
+          echo "::add-mask::$(tail -n 1 minisign.key)"
+
+          PUBLIC_KEY="$(tail -n 1 minisign.pub)"
+
+          for MANIFEST in $MANIFESTS; do
+            printf '\n[package.metadata.binstall.signing]\n' >> "${MANIFEST}"
+            printf 'algorithm = "minisign"\n' >> "${MANIFEST}"
+            printf 'pubkey = "%s"\n' "${PUBLIC_KEY}" >> "${MANIFEST}"
+          done
+
+          for ARCHIVE in dist/*.tar.gz; do
+            rsign sign -W -s minisign.key -x "${ARCHIVE}.sig" "${ARCHIVE}"
+          done
+
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
+      - name: Publish
+        run: |
+          set -u
+
+          # smoelius: Ideally, dry-running would check the auth token. However, that is not
+          # currently the case.
+          DIRS='. cargo-nested'
+          for DIR in $DIRS; do
+            pushd "$DIR"
+            if [[ '${{ github.event_name }}' = 'workflow_dispatch' ]]; then
+                cargo publish --allow-dirty --dry-run
+            else
+                cargo publish --allow-dirty || true
+            fi
+            popd
+          done
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Get version
+        id: get-version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create release notes
+        run: git log -p -1 CHANGELOG.md | grep '^+\($\|[^+]\)' | cut -c 2- | tee body.md
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-artifacts
+          path: |
+            body.md
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/*.sig
+          if-no-files-found: error
+
+  # smoelius: Separating the `publish` and `release` jobs has the following advantages. First,
+  # it limits which steps are executed with permissions `id-token: write` and `contents: write`.
+  # Second, suppose crate publication succeeds but release creation fails. Then the artifacts from
+  # the successful `publish` job can be downloaded, preserving the signatures associated with the
+  # public keys appended to the crates' manifests.
+  release:
+    name: Release
+    needs: publish
+    permissions:
+      actions: read
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: release-artifacts
+
+      - name: Create release
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ needs.publish.outputs.version }}
+          body_path: body.md
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/*.sig
+          draft: false
+          prerelease: ${{ contains(github.ref, 'pre') || contains(github.ref, 'rc') }}
