@@ -49,6 +49,7 @@ static SYSTEM: LazyLock<System> = LazyLock::new(|| {
         RefreshKind::nothing()
             .with_processes(ProcessRefreshKind::nothing().with_cmd(UpdateKind::Always)),
     )
+    .unwrap()
 });
 
 pub fn parent_cargo_command() -> Result<(CargoSubcommand, &'static [OsString])> {
