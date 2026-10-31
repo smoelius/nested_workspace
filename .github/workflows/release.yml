@@ -112,7 +112,9 @@ jobs:
   publish:
     name: Publish
     needs: build-binaries
-    environment: release
+    environment:
+      name: release
+      deployment: ${{ github.event_name != 'workflow_dispatch' }}
     permissions:
       actions: read
       contents: read
