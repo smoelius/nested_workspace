@@ -219,13 +219,20 @@ fn build_subcommand_and_args<'subcommand, T: AsRef<OsStr>>(
     let (subcommand, args) = match (&source, &subcommand) {
         // smoelius: If `cargo check` caused the build script to be run, run `cargo check` (i.e.,
         // running `cargo build` would be too much). For all other cases, run `cargo build`.
+        // smoelius: Do not warn about filtered or duplicated arguments when a command other than
+        // `cargo check` or `cargo build` causes the build script to be run.
         (Source::BuildScript, CargoSubcommand::Check) => (
             OsStr::new("check"),
-            build_or_check_args(package_name, subcommand, args),
+            build_or_check_args(package_name, subcommand, args, true),
         ),
-        (Source::BuildScript, _subcommand_other_than_check) => (
+        (Source::BuildScript, subcommand_other_than_check) => (
             OsStr::new("build"),
-            build_or_check_args(package_name, &CargoSubcommand::Build, args),
+            build_or_check_args(
+                package_name,
+                &CargoSubcommand::Build,
+                args,
+                matches!(subcommand_other_than_check, CargoSubcommand::Build),
+            ),
         ),
         (Source::Test, CargoSubcommand::Test) => (
             OsStr::new("test"),
@@ -250,6 +257,7 @@ fn build_or_check_args<T: AsRef<OsStr>>(
     package_name: Option<&str>,
     subcommand: &CargoSubcommand,
     args: &Args<'_, T>,
+    warn_about_filtered_args: bool,
 ) -> Vec<OsString> {
     // smoelius: The following arguments are prepended to the arguments passed: `--offline` and
     // `--workspace`.
@@ -287,17 +295,19 @@ fn build_or_check_args<T: AsRef<OsStr>>(
             args_filtered.push(arg_as_ref.to_owned());
         }
     }
-    if !args_filtered.is_empty() {
-        println!(
-            "cargo::warning={}",
-            filtered_message(package_name, subcommand, &args_filtered, false)
-        );
-    }
-    if !args_duplicated.is_empty() {
-        println!(
-            "cargo::warning={}",
-            filtered_message(package_name, subcommand, &args_duplicated, true)
-        );
+    if warn_about_filtered_args {
+        if !args_filtered.is_empty() {
+            println!(
+                "cargo::warning={}",
+                filtered_message(package_name, subcommand, &args_filtered, false)
+            );
+        }
+        if !args_duplicated.is_empty() {
+            println!(
+                "cargo::warning={}",
+                filtered_message(package_name, subcommand, &args_duplicated, true)
+            );
+        }
     }
     args_out
 }
