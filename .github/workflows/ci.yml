@@ -95,12 +95,12 @@ jobs:
           RAYON_NUM_THREADS: ${{ runner.os == 'Windows' && '1' || '0' }}
         run: |
           unset CARGO_TERM_COLOR
-          cargo test --workspace --exclude nested_workspace_example -- --nocapture
+          cargo test --workspace --exclude nested_workspace_example
 
       - name: Test example
         run: |
           unset CARGO_TERM_COLOR
-          cargo test -p nested_workspace_example -- --nocapture
+          cargo test -p nested_workspace_example
 
   all-checks:
     needs: [determine-environments, test]
