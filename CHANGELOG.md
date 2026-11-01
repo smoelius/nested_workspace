@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.1
+
+- Do not warn about filtered or duplicated arguments when a command other than `cargo check` or `cargo build` causes the build script to be run ([6da2e6d](https://github.com/smoelius/nested_workspace/commit/6da2e6dd65326a12f688dbac8bf6c1dbba4ce4a9))
+
 ## 3.2.0
 
 - Publish signed binaries ([5879b45](https://github.com/smoelius/nested_workspace/commit/5879b45b0795ef211d931bf818c86c42ee14b68d))
