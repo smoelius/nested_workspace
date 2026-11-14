@@ -64,7 +64,7 @@ jobs:
             ~/.cargo/git/db/
             ~/.dylint_drivers/
             ~/.rustup/toolchains/
-            target/dylint/
+            target/dylint/libraries/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Update and install toolchains
@@ -74,12 +74,15 @@ jobs:
           rustup default stable
           rustc -vV
 
+      - uses: taiki-e/install-action@v2.90.1
+        with:
+          tool: cargo-dylint, dylint-link
+
       - name: Install tools
         run: |
           rustup update
           rustup install nightly
           rustup component add clippy rustfmt --toolchain nightly
-          cargo install cargo-dylint dylint-link         || true
           cargo install cargo-msrv --no-default-features || true
           cargo install cargo-supply-chain               || true
 
