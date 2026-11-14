@@ -10,7 +10,7 @@ use elaborate::std::{
 use regex::Regex;
 use std::{
     collections::BTreeSet,
-    env::split_paths,
+    env::{consts, split_paths},
     ffi::{OsStr, OsString},
     fs::OpenOptions,
     path::{Path, PathBuf},
@@ -31,7 +31,7 @@ const SUBDIR_ARGS: [(&str, &[&str]); 6] = [
 
 #[test]
 fn trycmd() {
-    build_runner();
+    build_binaries();
 
     let paths = prepend_to_paths(Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug"))
         .into_string()
@@ -45,14 +45,20 @@ fn trycmd() {
         test_cases.env("PATH", &paths);
 
         test_cases.register_bin("cargo", Path::new(env!("CARGO")));
+        test_cases.register_bin(
+            "cargo-nested",
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("target/debug")
+                .join(format!("cargo-nested{}", consts::EXE_SUFFIX)),
+        );
 
         test_cases.case(format!("tests/trycmd/{subdir}/*.toml"));
     }
 }
 
-fn build_runner() {
+fn build_binaries() {
     let mut command = Command::new("cargo");
-    command.args(["build", "--package", "runner"]);
+    command.args(["build", "--package", "cargo-nested", "--package", "runner"]);
     let status = command.status_wc().unwrap();
     assert!(status.success());
 }
