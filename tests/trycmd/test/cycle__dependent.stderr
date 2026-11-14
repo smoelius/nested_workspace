@@ -3,9 +3,9 @@
 error: failed to run custom build command for `cycle v0.1.0 ([..]/[PUT]/fixtures/cycle)`
 
 Caused by:
-  process didn't exit successfully: `[CWD]/target/debug/build/cycle-[..]/build-script-build` (exit [..]: 101)
+  process didn't exit successfully: `[CWD]/target/debug/build/cycle/[..]/out/build_script_build` (exit [..]: 101)
   --- stdout
-  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle-[..]/out/[PUT].timestamp
+  cargo::rerun-if-changed=[CWD]/target/debug/build/cycle/[..]/out/[PUT].timestamp
 
   --- stderr
 
