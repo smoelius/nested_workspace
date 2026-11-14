@@ -135,7 +135,7 @@ A primary reason for this policy is that the arguments accepted by an arbitrary 
 
 ### Potential deadlocks
 
-Nested Workspace has safeguards to avoid potential deadlocks.
+Nested Workspace has safeguards to avoid certain deadlock scenarios.
 
 A build script holds a lock on the build directory while running. Furthermore, `cargo check` tries to obtain a lock on the package cache unless `--frozen` or `--offline` is passed. Thus, the following scenario could occur:
 
@@ -145,7 +145,7 @@ A build script holds a lock on the build directory while running. Furthermore, `
 
 To avoid this scenario, Nested Workspace always passes `--offline` in commands run on nested workspaces.
 
-Thus, in the scenario above, thread A would not hold a lock on the package cache, thereby avoiding the deadlock.
+Thus, in the scenario above, the nested Cargo command started by thread A would not try to lock the package cache, thereby avoiding the deadlock.
 
 #### Git dependencies
 
