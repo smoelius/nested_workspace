@@ -272,9 +272,9 @@ checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "elaborate"
-version = "2.3.0"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f37af86e18e0e9d38a9b0f45ed1961b6a5f74d2f38536fef28cdac8a47ddee"
+checksum = "c4dee3652bce837e99d20d6684fb83b66f0e0adb2b9a2633a2df620d1deceab1"
 dependencies = [
  "anyhow",
 ]
@@ -883,9 +883,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.40.1"
+version = "0.40.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e8a3edbe0394ce115f3917a00349dd242be09eb5a091ed509eaf67b55cfb8a8"
+checksum = "a86bac2f7d06e6384984118ad727f5694110f0ec44d924d05c8fdec3d030bee6"
 dependencies = [
  "libc",
  "memchr",
