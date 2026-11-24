@@ -8,6 +8,6 @@ publish = false
 doctest = false
 
 [dependencies]
-rustc_tools_util = { git = "https://github.com/rust-lang/rust-clippy" }
+rustc-hash = { git = "https://github.com/rust-lang/rustc-hash" }
 
 [workspace]
